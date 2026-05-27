@@ -37,6 +37,13 @@ tampilListPlayer([]) :- !.
 tampilListPlayer([player(Nama, Status, Deck)|T]) :-
     write('- '), write(Nama), nl,
     write('Status                 : '), write(Status), nl,
-    getLen(Deck, JmlKartu),
+    getLen(Deck, TotalKartu),
+    (
+        kartuTersembunyi(Nama, _)
+        ->
+        JmlKartu is TotalKartu - 1
+    ;
+        JmlKartu is TotalKartu
+    ),
     write('Jumlah Kartu di Tangan : '), write(JmlKartu), nl, nl,
     tampilListPlayer(T).

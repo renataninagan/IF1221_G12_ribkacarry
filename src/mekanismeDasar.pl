@@ -6,6 +6,9 @@ adaKartu(Deck, kartu(Warna, Jenis)) :-
     (W == Warna ; J == Jenis ; W == hitam),!.
 
 drawKartu(0, DrawPile, Deck, DrawPile, Deck) :- !.
+drawKartu(_, [], Deck, [], Deck) :-
+    write('Draw pile habis!'), nl,
+    !.
 drawKartu(N, [KartuAtas|SisaDraw], Deck, DrawPileSisa, DeckSisa) :-
     N > 0,
     appendElem(Deck, KartuAtas, DeckNow),
@@ -14,7 +17,7 @@ drawKartu(N, [KartuAtas|SisaDraw], Deck, DrawPileSisa, DeckSisa) :-
 
 akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, Discard, DrawPileNow) :-
     PemainNow = player(Nama, StatusNow, DeckNow),
-    appendElem(SisaPemain, [PemainNow], ListPemainNow),
+    appendElem(SisaPemain, PemainNow, ListPemainNow),
     retractall(gameStatus(_, _, _)),
     asserta(gameStatus(ListPemainNow, Discard, DrawPileNow)),
     (
@@ -33,23 +36,16 @@ ambilKartu :-
         KartuTerakhir = kartu(_, wilddrawfour)
     ->
         drawKartu(4, DrawPile, Deck, DrawPileNow, DeckNow),
-        format('~w mengambil 4 kartu akibat Wild Draw Four dan mengakhiri giliran.~n', [Nama]), nl,
-        
-        PemainNow = player(Nama, Status, DeckNow),
-        (
-            SisaPemain == []
-        ->
-            ListFinal = [PemainNow]
-        ;
-            appendElem(SisaPemain, PemainNow, ListFinal)
-        ),
-        retractall(gameStatus(_, _, _)),
-        asserta(gameStatus(ListFinal, [KartuTerakhir|SisaDiscard], DrawPileNow)),
-        cekInfo
+        format('~w mengambil 4 kartu dari deck karena kartu Wild Draw Four dan mengakhiri giliran.~n', [Nama]), nl,
+        akhiriGiliran(Nama, Status, DeckNow, SisaPemain, [KartuTerakhir|SisaDiscard], DrawPileNow)
     ;
         drawKartu(1, DrawPile, Deck, DrawPileNow, DeckNow),
-        format('~w mengambil 1 kartu dari deck dan mengakhiri giliran.~n', [Nama]), nl,
-        akhiriGiliran(Nama, Status, DeckNow, SisaPemain, [KartuTerakhir|SisaDiscard], DrawPileNow)
+        format('~w mengambil 1 kartu dari deck dan mengakhiri giliran.~n',
+        [Nama]), nl,
+        akhiriGiliran(Nama, Status, DeckNow,
+        SisaPemain,
+        [KartuTerakhir|SisaDiscard],
+        DrawPileNow)
     ).
 
 kartuCocokSelainHitam(Deck, WarnaTerakhir, JenisTerakhir) :-
@@ -57,8 +53,14 @@ kartuCocokSelainHitam(Deck, WarnaTerakhir, JenisTerakhir) :-
     W \== hitam,
     (W == WarnaTerakhir ; J == JenisTerakhir),!.
 
+warnaValid(merah).
+warnaValid(biru).
+warnaValid(hijau).
+warnaValid(kuning).
+
 mainkanKartu(N) :-
     gameStatus([player(Nama, Status, Deck)|SisaPemain], [KartuTerakhir|SisaDiscard], DrawPile),
+    retractall(statusUNI(Nama)),
     KartuTerakhir = kartu(WarnaTerakhir, JenisTerakhir),
     length(Deck, L),
     (
@@ -85,8 +87,9 @@ mainkanKartu(N) :-
         write('Wild Draw Four tidak boleh digunakan. Ada kartu lain yang dapat digunakan.'), nl,
         write('Pilih nomor kartu lagi: '),
         read(NBaru),
+        !,
         mainkanKartu(NBaru),
-        ! 
+        !
     ;
         true
     ),
@@ -144,6 +147,29 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
     Played = kartu(WarnaPilih, JenisPilih),
 
     removeCard(Deck, N, DeckNow),
+
+    (
+    kartuTersembunyi(Nama, HiddenIdx)
+    ->
+        (
+            HiddenIdx =:= N
+            ->
+            retractall(kartuTersembunyi(Nama, _))
+
+        ;
+            HiddenIdx > N
+            ->
+            HiddenBaru is HiddenIdx - 1,
+            retractall(kartuTersembunyi(Nama, _)),
+            assertz(kartuTersembunyi(Nama, HiddenBaru))
+
+        ;
+            true
+        )
+    ;
+        true
+    ),
+
     (DeckNow == [] -> StatusNow = menang ; StatusNow = Status),
 
     format('~w mengeluarkan kartu : ~w ~w~n', [Nama, WarnaPilih, JenisPilih]),
@@ -181,10 +207,13 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
             asserta(gameStatus(ListFinal, DiscardNow, DrawPile)),
             cekInfo, !
         ;
-            reverseL(SisaPemain, SisaPemainEfek),
+            reverseL(SisaPemain, ReversePlayer),
+            appendElem(ReversePlayer, player(Nama, StatusNow, DeckNow), ListFinal),
             DiscardNow = [Played, KartuTerakhir | SisaDiscard],
             write('Urutan giliran dibalik!'), nl,
-            akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemainEfek, DiscardNow, DrawPile)
+            retractall(gameStatus(_, _, _)),
+            asserta(gameStatus(ListFinal, DiscardNow, DrawPile)),
+            cekInfo, !
         )
 
     ; JenisPilih == skip ->
@@ -209,21 +238,38 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
     ; JenisPilih == wild ->
         write('Pilih warna yang mau dimainkan: '), nl,
         read(WarnaBaru),
+        (
+            warnaValid(WarnaBaru)
+            ->
+            true
+        ;
+            write('Warna tidak valid!'), nl,
+            fail
+        ),
         format('Warna yang dipilih : ~w~n', [WarnaBaru]),
         PlayedNow = kartu(WarnaBaru, wild),
         DiscardNow = [PlayedNow, KartuTerakhir | SisaDiscard], nl,
         akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, DiscardNow, DrawPile)
 
     ; JenisPilih == wilddrawfour ->
-        mintaWarna(WarnaBaru),
+        SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
+        drawKartu(4, DrawPile, DeckNext,
+        DrawPileNow, DeckNextNow),
+        format('~w mengambil 4 kartu akibat Wild Draw Four!~n',[NamaNext]),
+        PemainNext = player(NamaNext, StatusNext, DeckNextNow),
+        appendElem(SisaLain, PemainNext, SisaPemainEfek),
+
+        write('Pilih warna yang mau dimainkan: '), nl,
+        read(WarnaBaru),
         format('Warna yang dipilih : ~w~n', [WarnaBaru]),
         PlayedNow = kartu(WarnaBaru, wilddrawfour),
         DiscardNow = [PlayedNow, KartuTerakhir | SisaDiscard],
-        akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, DiscardNow, DrawPile)
+        akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemainEfek, DiscardNow, DrawPileNow)
 
     ;
-        DiscardNow = [Played, KartuTerakhir | SisaDiscard],
-        akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, DiscardNow, DrawPile)
+    DiscardNow = [Played, KartuTerakhir | SisaDiscard],
+    akhiriGiliran(Nama, StatusNow, DeckNow,
+    SisaPemain, DiscardNow, DrawPile)
     ).
 
 tantang :-
@@ -238,8 +284,7 @@ tantang :-
 
     write('Tantangan dilakukan!'), nl,
 
-    pemainTerakhir([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
-             player(NamaPelaku, StatusPelaku, DeckPelaku)),
+    lastElem(SisaPemain, player(NamaPelaku, StatusPelaku, DeckPelaku)),
 
     format('Memeriksa kartu ~w...~n', [NamaPelaku]),
 

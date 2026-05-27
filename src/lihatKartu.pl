@@ -1,18 +1,25 @@
 % menampilkan kartu pemain
 
 lihatKartu :-
-    gameStatus([player(_,_,ListKartu)|_], DiscardPile, DrawPile),
-    tampilkanKartu(ListKartu, 1).
+    gameStatus([player(Nama,_,ListKartu)|_], _, _),
+    tampilkanKartu(Nama, ListKartu, 1),
+    !.
 
-tampilkanKartu([], _).
+tampilkanKartu(_, [], _).
 
-tampilkanKartu([kartu(Warna, Jenis) | Rest], No) :-
+tampilkanKartu(Nama, [kartu(Warna, Jenis) | Rest], No) :-
+    (kartuTersembunyi(Nama, No) 
+    -> 
+    write(No),
+    write('. [KARTU TERSEMBUNYI]'),
+    nl
+    ;
     write(No),
     write('. '),
     write(Warna),
     write('-'),
     write(Jenis),
-    nl,
-
+    nl
+    ),
     Noke is No + 1,
-    tampilkanKartu(Rest, Noke).
+    tampilkanKartu(Nama, Rest, Noke).

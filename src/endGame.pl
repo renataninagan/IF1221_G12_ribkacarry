@@ -9,7 +9,7 @@ nilaiKartu(kartu(_,rev), 10).
 nilaiKartu(kartu(_,drawtwo), 10).
 
 nilaiKartu(kartu(_,wild), 20).
-nilaiKartu(kartu(_,drawfour), 20).
+nilaiKartu(kartu(_,wilddrawfour), 20).
 nilaiKartu(kartu(_,mimic), 20).
 
 
