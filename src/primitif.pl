@@ -38,3 +38,7 @@ pemainTerakhir([_|T], X) :- pemainTerakhir(T, X).
 
 cutLastElem([_], []).
 cutLastElem([H|T], [H|R]) :- cutLastElem(T, R).
+
+lastElem([X], X).
+lastElem([_|T], X) :-
+    lastElem(T, X).

@@ -6,6 +6,7 @@
 :- include('startGame.pl').
 :- include('lihatKartu.pl').
 :- include('lihatCommand.pl').
+:- include('kartuTersembunyi.pl').
 
  
 startGame :-
