@@ -7,6 +7,7 @@
 :- include('lihatKartu.pl').
 :- include('lihatCommand.pl').
 :- include('kartuTersembunyi.pl').
+:- include('efekKartu.pl').
 :- include('godsHand.pl').
 
  
