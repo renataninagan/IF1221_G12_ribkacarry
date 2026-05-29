@@ -52,14 +52,14 @@ verifikasiJumlahPemain(X, 0) :- X < 2.
 verifikasiJumlahPemain(X, 0) :- X > 4.
 
 jumlahPemain(X) :-
-    write('Masukkan jumlah pemain (2-4) : '),
+    write('>> Masukkan jumlah pemain (2-4) : '),
     read(Jumlah),
     verifikasiJumlahPemain(Jumlah, Y),
     Y =:= 1,
     X is Jumlah, !.
 
 jumlahPemain(X) :-
-    write('Jumlah pemain harus diantara 2-4 orang! Silakan input ulang.'), nl,
+    write('   [!] Jumlah pemain harus diantara 2-4 orang! Silakan input ulang.'), nl,nl,
     jumlahPemain(X).
 
 isUniquePemain(_, [], 1).
@@ -72,14 +72,14 @@ loopInputNama(0, L, L, _) :- !.
 loopInputNama(N, L, PlayerFinal, K) :-
     N > 0,
     K1 is K+1,
-    write('Masukkan nama pemain '), write(K), write(' : '),
+    write('>> Masukkan nama pemain '), write(K), write(' : '),
     read(Nama),
     isUniquePemain(Nama, L, X),
     ( X == 1 ->  N1 is N - 1, append(L, [player(Nama, main, [])], L1), loopInputNama(N1, L1, PlayerFinal, K1);
-        write('Nama sudah digunakan! Silakan input ulang.'), nl, loopInputNama(N, L, PlayerFinal, K)).
+        write(' [!] Nama sudah digunakan! Silakan input ulang.'), nl, loopInputNama(N, L, PlayerFinal, K)).
     
 printInputNama([player(T,_,_)]) :- write(T), !. 
-printInputNama([player(H,_,_)|T]) :- write(H), write('-'), printInputNama(T).
+printInputNama([player(H,_,_)|T]) :- write(H), write(' -> '), printInputNama(T).
 
 tangkap(NamaPemain) :-
 
@@ -115,10 +115,12 @@ modeValid(2, turnamen) :- !.
 modeValid(_, x).
 
 pilihMode(ModePilihan) :-
-    nl, write('Tersedia 2 mode permainan.'), nl,
-    write('1. Mode klasik'), nl,
-    write('2. Mode turnamen'), nl,
-    write('Pilih mode permainan: '),
+    write('──────────────────────  MODE  ──────────────────────'), nl,
+    write(' • PILIHAN MODE PERMAINAN'), nl,
+    write('   1. Mode Klasik'), nl,
+    write('   2. Mode Turnamen'), nl,
+    write('────────────────────────────────────────────────────'), nl,
+    write('>> Pilih mode permainan (nomor) : '),
     read(Pilihan),
     modeValid(Pilihan, Mode),
     ( 
@@ -126,7 +128,8 @@ pilihMode(ModePilihan) :-
     ->
         ModePilihan = Mode
     ;
-        write('Pilihan tidak valid! Silakan input ulang.'), nl,
+        nl,
+        write('   [!] Pilihan tidak valid! Silakan input ulang.'), nl,
         pilihMode(ModePilihan)
     ).
 
@@ -157,9 +160,11 @@ shuffleTim(ListPlayer, ListPlayerNow) :-
 
     ListPlayerNow = [player(A1, SA1, DA1), player(B1, SB1, DB1), player(A2, SA2, DA2), player(B2, SB2, DB2)],
     
-    nl, write('--- Pembagian Tim Turnamen (2vs2) ---'), nl,
-    format('Tim A: ~w dan ~w~n', [A1, A2]),
-    format('Tim B: ~w dan ~w~n', [B1, B2]), nl.
+    nl,
+    write('──────────────  HASIL PEMBAGIAN TIM  ───────────────'), nl,
+    format(' • TIM A : ~w & ~w~n', [A1, A2]),
+    format(' • TIM B : ~w & ~w~n', [B1, B2]),
+    write('────────────────────────────────────────────────────'), nl.
 
 inisialisasiGame :-
     retractall(isStart(_)),
@@ -169,27 +174,30 @@ inisialisasiGame :-
 
     pilihMode(Mode),
     asserta(gameMode(Mode)),
-    format('Permainan dimulai dalam mode ~w.~n', [Mode]),
+
     ( 
-        Mode == turnamen 
+        gameMode(turnamen) 
     ->
+        write(' • Permainan dimulai dalam mode TURNAMEN.'), nl,
         N = 4,
-        write('Mode Turnamen: Jumlah pemain otomatis diset 4 orang (2vs2)!'), nl
+        write(' • Mode Turnamen: Pemain otomatis berjumlah 4 orang (2 vs 2)!'), nl, nl
     ;   
+        write(' • Permainan dimulai dalam mode KLASIK.'), nl,nl,
         jumlahPemain(N)
     ),
     
     loopInputNama(N, [], ListPlayer, 1),
 
     ( 
-        Mode == turnamen 
+        gameMode(turnamen) 
     ->
         shuffleTim(ListPlayer, ListPlayerNow)
     ; 
         ListPlayerNow = ListPlayer
     ),
-    
-    nl, write('Urutan pemain : '), printInputNama(ListPlayerNow), nl,
+    write('───────────────────  GAME START  ───────────────────'), nl,
+    write(' • URUTAN BERMAIN'), nl,
+    write('   '), printInputNama(ListPlayerNow), nl, nl,
     deckLengkap(DeckAwal),
     shuffleKartu(DeckAwal, DrawPileAwal),
     bagikanKartu(ListPlayerNow, DrawPileAwal, ListTerisi, DrawPileSisa),
@@ -197,12 +205,14 @@ inisialisasiGame :-
     DiscardPile = [KartuPertama],
     KartuPertama = kartu(W,J),
 
-    nl, write('Setiap pemain mendapat 7 kartu acak'),nl,
-    nl, write('Kartu Discard Top : '),write(W) ,write('-'), write(J), nl,
+    write(' • PERSIAPAN DECK'), nl,
+    write('   Setiap pemain mendapat 7 kartu acak.'), nl,
+    format('   Kartu Teratas: [~w - ~w] ~n', [W, J]),
+    write('────────────────────────────────────────────────────'), nl,
     retractall(gameStatus(_, _, _)),
     asserta(gameStatus(ListTerisi, DiscardPile, DrawPileFinal)),
     ( ListTerisi = [player(GiliranNow,_,_)|_] -> true ; GiliranNow = 'nullllll' ),
-    nl, write('Giliran '),write(GiliranNow), nl,
+    nl, format(' >> Giliran : ~w~n', [GiliranNow]),
     asserta(isStart(true)).
 
 cekStatus(player(_, menang, []), menang) :- !.

@@ -5,45 +5,124 @@ tulisPemain(Urutan, JumlahPemain,_) :-
 
 /* Rekurens tulisPemain */
 tulisPemain(Urutan, JumlahPemain, [Nama | SisaNama]) :-
-    write('Nama pemain'), write(Urutan), write(': '), write(Nama), nl,
+    ( Urutan < 10 -> Spasi = ' ' ; Spasi = '' ),
     player(Nama, DaftarKartu),
     getLen(DaftarKartu, X),
-    write('Jumlah kartu : '), write(X), nl, nl,
+    format('   ~w~w. ~w (~w kartu)~n', [Spasi, Urutan, Nama, X]),
     NextUrutan is Urutan + 1,
     tulisPemain(NextUrutan, JumlahPemain, SisaNama).
-
 /* Basis untuk tulisListUrutan */
 tulisListUrutan([NamaTerakhir]) :-
     write(NamaTerakhir), write('.'), nl, !.
 
 /* Rekurens tulisListUrutan */ 
 tulisListUrutan([Nama | Sisa]) :-
-    write(Nama), write(' - '),
+    write(Nama), write(' -> '),
     tulisListUrutan(Sisa). 
 
 cekInfo :-
     nl,
-    gameStatus(ListPlayer, DiscardPile, DrawPile),
+    gameStatus(ListPlayer, DiscardPile, _DrawPile),
     DiscardPile = [kartu(W,J)|_],
-    nl, write('=== STATUS TERKINI ==='), nl,
     ListPlayer = [player(Nama, _, _)|_],
-    write('Kartu discard top    : '), write(W), write('-'), write(J),nl, nl,
-    write('Urutan pemain        : '), nl,
-    tampilListPlayer(ListPlayer), nl,
-    write('Giliran '), write(Nama), nl,
+    
+    write('────────────────  STATUS PERMAINAN  ────────────────'), nl,
+    format(' • KARTU TERATAS : [~w - ~w]~n', [W, J]),
+    write(' • URUTAN BERMAIN: '), 
+    findall(P, member(player(P, _, _), ListPlayer), ListNama),
+    tulisListUrutan(ListNama),
+    write(' • DETAIL PEMAIN :'), nl,
+    tampilListPlayer(ListPlayer),
+    write('────────────────────────────────────────────────────'), nl,nl,
+    format(' >> Giliran : ~w~n', [Nama]),
     !.
 
 tampilListPlayer([]) :- !.
 tampilListPlayer([player(Nama, Status, Deck)|T]) :-
-    write('- '), write(Nama), nl,
-    write('Status                 : '), write(Status), nl,
     getLen(Deck, TotalKartu),
     (
         kartuTersembunyi(Nama, _)
-        ->
+    ->
         JmlKartu is TotalKartu - 1
     ;
         JmlKartu is TotalKartu
     ),
-    write('Jumlah Kartu di Tangan : '), write(JmlKartu), nl, nl,
+    format('   - ~w (~w) | ~w kartu~n', [Nama, Status, JmlKartu]),
     tampilListPlayer(T).
+
+
+% LIHAT COMMAND
+lihatCommand :-
+    gameStatus(ListPlayer, DiscardPile, _DrawPile),
+    ListPlayer = [player(_,Status,Deck)|_],
+    DiscardPile = [KartuTerakhir|_],
+    
+    nl,
+    write('────────────────────  COMMAND  ────────────────────'), nl,
+    write(' • AKSI UTAMA'), nl,
+    (Status == 'main' -> write('   - mainkanKartu   (Mainkan kartu dari tangan)'), nl ; true),
+    ((\+ adaKartu(Deck, KartuTerakhir)) -> write('   - ambilKartu  (Ambil kartu dari draw pile)'), nl ; true),
+    
+    nl,
+    write(' • AKSI PENDUKUNG'), nl,
+    write('   - lihatCommand (Membuka panduan perintah ini)'), nl,
+    write('   - lihatKartu   (Melihat kartu yang di tangan)'), nl,
+    write('   - cekInfo      (Melihat status permainan)'), nl,
+    write('────────────────────────────────────────────────────'), nl.
+
+% LIHAT KARTU
+% menampilkan kartu pemain
+
+lihatKartu :-
+    gameStatus(SemuaPemain, _, _),
+    SemuaPemain = [player(Nama, _, ListKartu) | _],
+    gameMode(Mode),
+    (
+        gameMode(klasik)
+    ->
+        nl,
+        write('──────────────────────  KARTU  ─────────────────────'), nl,
+        write(' • KARTU DI TANGAN ANDA'), nl,
+        tampilkanKartu(Nama, ListKartu, 1),
+        write('────────────────────────────────────────────────────'), nl
+    ;    
+        nl,
+        write('──────────────────────  KARTU  ─────────────────────'), nl,
+        format(' • KARTU DI TANGAN ANDA (~w)~n', [Nama]),
+        tampilkanKartu(Nama, ListKartu, 1),
+
+        timPemain(Nama, Regu),
+
+        (
+            isMem(player(P2, _, KartuP2), SemuaPemain), P2 \== Nama, timPemain(P2, Regu)
+        ->
+            format('~n • KARTU TEMAN ANDA (~w)~n', [P2]),
+            tampilkanKartu(P2, KartuP2, 1)
+        ;
+            true
+        ),
+        write('────────────────────────────────────────────────────')
+    ), 
+    !.
+
+tampilkanKartu(_, [], _).
+
+tampilkanKartu(Nama, [kartu(Warna, Jenis) | Rest], No) :-
+    (No < 10 -> Spasi = ' ' ; Spasi = ''),
+    ( 
+        Warna == kuning -> SpasiWarna = '' ;
+        Warna == merah  -> SpasiWarna = ' ' ;
+        Warna == hijau  -> SpasiWarna = ' ' ;
+        Warna == hitam  -> SpasiWarna = ' ' ;
+        Warna == biru   -> SpasiWarna = '  ' ; 
+        SpasiWarna = '' 
+    ),
+    (
+        kartuTersembunyi(Nama, No) 
+    -> 
+        format('   ~w~w. [KARTU TERSEMBUNYI]~n', [SpasiNo, No])
+    ;
+        format('   ~w~w. ~w~w - ~w~n', [Spasi, No, Warna, SpasiWarna, Jenis])
+    ),
+    Noke is No + 1,
+    tampilkanKartu(Nama, Rest, Noke).
