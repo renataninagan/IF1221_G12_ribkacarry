@@ -69,8 +69,8 @@ mainkanKartu(N) :-
     ->
         true
     ;
-        format('Tidak ada kartu ke ~w! Pilih kartu antara 1 - ~w.~n', [N, L]),
-        write('Pilih nomor kartu (angka saja, diakhiri titik): '),
+        format('   [!] Tidak ada kartu ke ~w! Pilih kartu antara 1 - ~w.~n', [N, L]),
+        write('>> Pilih nomor kartu (angka saja, diakhiri titik): '),
         read(NBaru),
         mainkanKartu(NBaru),
         !
@@ -84,8 +84,8 @@ mainkanKartu(N) :-
         JenisPilih == wilddrawfour,
         kartuCocokSelainHitam(Deck, WarnaTerakhir, JenisTerakhir)
     ->
-        write('Wild Draw Four tidak boleh digunakan. Ada kartu lain yang dapat digunakan.'), nl,
-        write('Pilih nomor kartu lagi: '),
+        write('   [!] Wild Draw Four tidak boleh digunakan. Ada kartu lain yang dapat digunakan.'), nl,
+        write('>> Pilih nomor kartu lagi: '),
         read(NBaru),
         !,
         mainkanKartu(NBaru),
@@ -97,8 +97,8 @@ mainkanKartu(N) :-
     (
         (JenisPilih == drawtwo, JenisTerakhir == drawtwo)
     ->
-        write('Draw Two tidak boleh ditumpuk!'), nl,
-        write('Pilih nomor kartu lagi: '),
+        write('   [!] Draw Two tidak boleh ditumpuk!'), nl,
+        write('>> Pilih nomor kartu lagi: '),
         read(NBaru), mainkanKartu(NBaru), !
     ;
         true
@@ -107,8 +107,8 @@ mainkanKartu(N) :-
     (
         (JenisPilih == wild, JenisTerakhir == wild)
     ->
-        write('Wild tidak boleh ditumpuk!'), nl,
-        write('Pilih nomor kartu lagi: '),
+        write('   [!] Wild tidak boleh ditumpuk!'), nl,
+        write('>> Pilih nomor kartu lagi: '),
         read(NBaru), mainkanKartu(NBaru), !
     ;
         true
@@ -116,8 +116,8 @@ mainkanKartu(N) :-
     (
         (JenisPilih == wilddrawfour, JenisTerakhir == wilddrawfour)
     ->
-        write('Wild Draw Four tidak boleh ditumpuk!'), nl,
-        write('Pilih nomor kartu lagi: '),
+        write('   [!] Wild Draw Four tidak boleh ditumpuk!'), nl,
+        write('>> Pilih nomor kartu lagi: '),
         read(NBaru), mainkanKartu(NBaru), !
     ;
         true
@@ -171,13 +171,13 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
 
     (DeckNow == [] -> StatusNow = menang ; StatusNow = Status),
 
-    format('~w mengeluarkan kartu : ~w ~w~n', [Nama, WarnaPilih, JenisPilih]),
+    format(' • ~w mengeluarkan kartu : [~w - ~w]~n', [Nama, WarnaPilih, JenisPilih]),
     DiscardNow = [Played, KartuTerakhir | SisaDiscard],
     efekKartu(JenisPilih, Played, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow).
 
 kartuTidakCocok(Nama, Deck, KartuTerakhir) :-
-    write('Kartu tidak cocok! Pilih kartu lain.'), nl,
-    (\+ adaKartu(Deck, KartuTerakhir) -> format('~w tidak punya kartu yang cocok, otomatis mengambil kartu.~n', [Nama]),ambilKartu; true),fail.
+    write('   [!] Kartu tidak cocok! Pilih kartu lain.'), nl,
+    (\+ adaKartu(Deck, KartuTerakhir) -> format(' • ~w tidak punya kartu yang cocok, otomatis mengambil kartu.~n', [Nama]),ambilKartu; true),fail.
 
 tantang :-
     gameStatus([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
@@ -186,10 +186,10 @@ tantang :-
     (KartuTerakhir = kartu(_, wilddrawfour) ->
         true
     ;
-        write('Tidak ada wild draw four yang bisa ditantang!'), nl, fail
+        write('   [!] Tidak ada wild draw four yang bisa ditantang!'), nl, fail
     ),
 
-    write('Tantangan dilakukan!'), nl,
+    write(' • Tantangan dilakukan!'), nl,
 
     lastElem(SisaPemain, player(NamaPelaku, StatusPelaku, DeckPelaku)),
 
@@ -246,7 +246,7 @@ swapKartu(NoKartuP1, NoKartuP2) :-
     (
         sudahSwap(P1)
     ->
-        write('Swap hanya bisa dilakukan sekali dalam 1 giliran!'), nl, !
+        write('   [!] Swap hanya bisa dilakukan sekali dalam 1 giliran!'), nl, !
     ;
         timPemain(P1, TimP),
         timPemain(P2, TimP),
@@ -259,13 +259,13 @@ swapKartu(NoKartuP1, NoKartuP2) :-
         (
             (JmlKartuP1 =:= 1; JmlKartuP2 =:= 1)
         ->
-            write('Swap tidak bisa dilakukan karena Anda/P2 Anda hanya memiliki 1 kartu!'), nl, !
+            write('   [!] Swap tidak bisa dilakukan karena Anda/P2 Anda hanya memiliki 1 kartu!'), nl, !
         ;
             (
                 (NoKartuP1 < 1; NoKartuP1 > JmlKartuP1;
                 NoKartuP2 < 1; NoKartuP2 > JmlKartuP2)
             ->
-                write('Index diluar jumlah kartu! Tolong input kembali.'), nl, !
+                write('   [!] Index diluar jumlah kartu! Tolong input kembali.'), nl, !
             ;
                 getCard(DeckP1, NoKartuP1, KartuP1),
                 removeCard(DeckP1, NoKartuP1, DeckP1Removed),

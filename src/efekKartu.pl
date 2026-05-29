@@ -1,8 +1,9 @@
 efekKartu(drawtwo, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, drawtwo)),
     SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
-    drawKartu(2, DrawPile, DeckNext, DrawPileNow, DeckNextNow),
-    format('~w mengambil 2 kartu dari draw pile akibat drawtwo card!~n', [NamaNext]),
+    drawKartu(2, DrawPile, DeckNext, DrawPileNow, DeckNextNow),nl, 
+    write('   [?!] EFEK DRAW TWO~n'),
+    format('   ~w mengambil 2 kartu dari Draw Pile.~n', [NamaNext]),
     
     PemainNow = player(Nama, StatusNow, DeckNow),
     PemainNext = player(NamaNext, StatusNext, DeckNextNow),
@@ -19,8 +20,9 @@ efekKartu(drawtwo, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow
     cekInfo, !.
 
 efekKartu(rev, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
-    asserta(riwayatAksi(Nama, rev)),
-    write('Urutan giliran dibalik!'), nl,   
+    asserta(riwayatAksi(Nama, rev)),nl,
+    write('   [?!] EFEK REVERSE'), nl,
+    write('   Urutan giliran bermain dibalik!'), nl,  
     (
         SisaPemain = [PemainKorban | []]
     ->
@@ -40,7 +42,8 @@ efekKartu(rev, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
 efekKartu(skip, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, skip)),
     SisaPemain = [PemainKorban | SisaSetelahSkip],
-    write('Pemain berikutnya dilewati!'), nl,
+    write('   [?!] EFEK SKIP'), nl,
+    write('   Pemain berikutnya dilewati!'), nl,
     
     PemainNow = player(Nama, StatusNow, DeckNow),
     
@@ -60,7 +63,8 @@ efekKartu(skip, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :
 efekKartu(wild, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, wild)),
     gantiWarna(WarnaBaru),
-    format('Warna yang dipilih : ~w~n', [WarnaBaru]), nl,
+    write('   [?!] EFEK WILD'), nl,
+    format('   Warna kartu diubah menjadi : [~w]~n', [WarnaBaru]),
 
     (
         DiscardNow = [_KartuTerakhir | SisaDiscard] 
@@ -77,13 +81,14 @@ efekKartu(wilddrawfour, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, [_Kar
     asserta(riwayatAksi(Nama, wilddrawfour)),
     SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
     drawKartu(4, DrawPile, DeckNext, DrawPileNow, DeckNextNow),
-    format('~w mengambil 4 kartu akibat Wild Draw Four!~n',[NamaNext]),
+    write('   [?!] EFEK WILD DRAW FOUR'), nl,
+    format('   ~w wajib mengambil 4 kartu dari Draw Pile.~n', [NamaNext]),
 
     PemainNow = player(Nama, StatusNow, DeckNow),
     PemainNext = player(NamaNext, StatusNext, DeckNextNow),
 
     gantiWarna(WarnaBaru),
-    format('Warna yang dipilih : ~w~n', [WarnaBaru]),
+    format('   Warna kartu diubah menjadi : [~w]~n', [WarnaBaru]),
     DiscardBaru = [kartu(WarnaBaru, wilddrawfour) | SisaDiscard],
     (
         SisaLain == []
@@ -102,14 +107,15 @@ efekKartu(mimic, kartu(WarnaTerakhir, mimic), Nama, StatusNow, DeckNow, SisaPema
     (   
         findAction(SisaDiscard, 0, kartu(WarnaAksi, JenisTerakhir), Turn)
     ->  
-        (retract(riwayatAksi(NamaPemainLama, JenisTerakhir)) -> true ; NamaPemainLama = 'Pemain sebelumnya'),
-        write('Menelusuri riwayat permainan'), nl,
-        format('Kartu aksi terakhir yang dimainkan: ~w-~w oleh ~w ~w giliran lalu.~n ', [WarnaAksi, JenisTerakhir, NamaPemainLama, Turn]),
-        format('Kartu mimic menyalin efek ~w~n', [JenisTerakhir]),
+        (retract(riwayatAksi(NamaPemainLama, JenisTerakhir)) -> true ; NamaPemainLama = 'Pemain sebelumnya'),nl, 
+        write('   [?!] EFEK MIMIC'), nl,
+        format('   Kartu Aksi terakhir: [~w - ~w] dimainkan oleh ~w (~w giliran lalu).~n', [WarnaAksi, JenisTerakhir, NamaPemainLama, Turn]),
+        format('   Kartu Mimic menyalin efek ~w!~n', [JenisTerakhir]),
         DiscardGanti = [kartu(WarnaAksi, JenisTerakhir) | SisaDiscard],
         efekKartu(JenisTerakhir, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardGanti)
     ;   
-        write('Tidak ada kartu aksi di tumpukan! Mimic bertingkah seperti kartu wild.'), nl,
+        write('   [?!] EFEK MIMIC'), nl,
+        write('   Tidak ada kartu aksi di tumpukan! Mimic bertingkah seperti kartu wild.'), nl,
         efekKartu(wild, kartu(WarnaTerakhir, wild), Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow)
     ).
 
@@ -126,13 +132,13 @@ findAction([kartu(_, _)|T],I, Kartu, Turn) :-
     findAction(T, I1, Kartu, Turn).
 
 gantiWarna(WarnaBaru) :-
-    write('Pilih warna yang mau dimainkan: '), nl,
+    write('>> Pilih warna yang mau dimainkan: '), nl,
     read(WarnaInput),
     (
         warnaValid(WarnaInput)
     ->
         WarnaBaru = WarnaInput 
     ;
-        write('Warna tidak valid! Silakan coba lagi.'), nl, nl,
+        write('   [!] Warna tidak valid! Silakan coba lagi.'), nl, nl,
         gantiWarna(WarnaBaru) 
     ).

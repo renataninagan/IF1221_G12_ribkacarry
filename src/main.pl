@@ -4,8 +4,6 @@
 :- include('cekInfo.pl').
 :- include('mekanismeDasar.pl').
 :- include('startGame.pl').
-:- include('lihatKartu.pl').
-:- include('lihatCommand.pl').
 :- include('kartuTersembunyi.pl').
 :- include('efekKartu.pl').
 :- include('godsHand.pl').
@@ -13,16 +11,18 @@
  
 startGame :-
     nl,
-    write('===================================='), nl,
-    write('  Selamat datang di Permainan UNI!  '), nl,
-    write('===================================='), nl,
-    nl,
-    write('Aturan :'), nl,
-    write('  - Cocokkan warna atau angka kartu teratas'), nl,
-    write('  - Ketik DrawPile untuk ambil kartu dari DrawPile'), nl,
-    write('  - Pemain  yang kartunya habis maka MENANG'), nl,
-    write('  - Jika DrawPile habis dan tidak bisa main, KALAH'), nl,
-    nl,
+    write('───────────────────────  UNI  ──────────────────────'), nl,
+    write('           Selamat datang di Permainan UNI!         '), nl,
+    write('────────────────────────────────────────────────────'), nl,
+    
+    write(' • CARA BERMAIN'), nl,
+    write('   1. Cocokkan warna / simbol dengan kartu teratas.'), nl,
+    write('   2. Ketik \'DrawPile\' jika tidak bisa jalan.'), nl,
+    write('   3. Habiskan kartu di tangan untuk MENANG.'), nl,nl,
+    
+    write(' • PERINGATAN'), nl,
+    write('   Jika dek habis dan tidak ada kartu valid, KALAH.'), nl,
+    write('────────────────────────────────────────────────────'), nl,
+    
     inisialisasiGame,
-    nl.
- 
+    !.
