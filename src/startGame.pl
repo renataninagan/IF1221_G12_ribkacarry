@@ -173,6 +173,32 @@ uni(IndeksKartu) :-
         asserta(gameStatus([player(Nama, Status, DeckNow) | SisaPemain], Discard, DrawPileNow))
     ).
 
+tangkap(NamaPemain) :-
+    gameStatus([player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain], Discard, DrawPile),
+    
+    ( member(player(NamaPemain, _, DeckTarget), [player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain]) ->
+        getLen(DeckTarget, SisaKartu),
+        ( (SisaKartu =:= 1, \+ statusUNI(NamaPemain)) ->
+            format('~w tertangkap tidak menyerukan UNI.~n', [NamaPemain]),
+            format('~w mendapatkan 2 kartu penalti.~n', [NamaPemain]),
+            
+            drawKartu(2, DrawPile, DeckTarget, DrawPileNow, DeckTargetNow),
+            
+            updatePemainList(NamaPemain, SisaPemain, DeckTargetNow, SisaPemainNow),
+            akhiriGiliran(Pemanggil, StatusPemanggil, DeckPemanggil, SisaPemainNow, Discard, DrawPileNow)
+            
+        ;
+            format('Tuduhan salah! ~w tidak melanggar aturan.~n', [NamaPemain]),
+            format('~w mendapatkan 1 kartu penalti.~n', [Pemanggil]),
+            
+            drawKartu(1, DrawPile, DeckPemanggil, DrawPileNow, DeckPemanggilNow),
+            
+            retractall(gameStatus(_, _, _)),
+            asserta(gameStatus([player(Pemanggil, StatusPemanggil, DeckPemanggilNow)|SisaPemain], Discard, DrawPileNow)),
+            akhiriGiliran(Pemanggil, StatusPemanggil, DeckPemanggil, SisaPemain, Discard, DrawPileNow)
+        )
+    ).
+
 listPemenang([], []).
 listPemenang([H|T], [H|L]) :-
     H = player(_, menang, _), !,
