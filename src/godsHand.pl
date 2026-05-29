@@ -8,50 +8,48 @@ godsHand :-
 
     randomizeIdx(0, 100, Probability),
     (Probability < 20 ->
-        true
+        
+        ListPemain = [player(NamaPemanggil, Status, Deck) | SisaPemain],
+        
+        pick2Random(ListPemain, Pemberi, Penerima),
+
+        Pemberi = player(NamaPemberi, StatusPemberi, DeckPemberi),
+        Penerima = player(NamaPenerima, StatusPenerima, DeckPenerima),
+
+        getLen(DeckPemberi, LenPemberi),
+        BatasKartu is LenPemberi + 1,
+        randomizeIdx(1, BatasKartu, IdxKartu),
+        getCard(DeckPemberi, IdxKartu, KartuTerpilih),
+        removeCard(DeckPemberi, IdxKartu, DeckPemberiNow),
+
+        DeckPenerimaNow = [KartuTerpilih | DeckPenerima],
+
+        (DeckPemberiNow == [] ->
+            StatusPemberiNow = menang
+        ;
+            StatusPemberiNow = StatusPemberi
+        ),
+
+        updatePemainList(NamaPemberi, ListPemain, DeckPemberiNow, ListPemainSementara),
+        updatePemainList(NamaPenerima, ListPemainSementara, DeckPenerimaNow, ListFinal),
+
+        pindahGiliran(ListFinal, ListPemainNow),
+
+        retractall(gameStatus(_, _, _)),
+        asserta(gameStatus(ListPemainNow, Discard, DrawPile)),
+
+        KartuTerpilih = kartu(W, J),
+        write('Tuhan telah berkehendak.'), nl,
+        format('Kartu ~w-~w milik ~w berpindah tangan ke ~w~n', [W, J, NamaPemberi, NamaPenerima]),
+
+        (StatusPemberiNow == menang -> 
+            format('~w Menang!~n', [NamaPemberi]),
+            endGame 
+        ; 
+            true
+        ),
+        cekInfo, !
     ;
-        format("Pemanggilan God's Hand gagal dilakukan ~w ", [NamaPemanggil]), nl, !, fail
-    
-    ),
-
-    ListPemain is [player(NamaPemanggil, Status, Deck) | SisaPemain],
-    pickRandom(2, ListPemain, [Pemberi | Penerima]),
-
-    Pemberi = player(NamaPemberi, StatusPemberi, DeckPemberi),
-    Penerima = player(NamaPenerima, StatusPenerima, DeckPenerima),
-
-    getLen(DeckPemberi, LenPemberi),
-
-    randomizeIdx(1, LenPemberi, IdxKartu),
-    getCard(DeckPemberi, IdxKartu, KartuTerpilih),
-    removeCard(DeckPemberi, IdxKartu, DeckPemberiNow),
-
-    appendElem(KartuTerpilih, DeckPenerima, DeckPenerimaNow),
-
-    (DeckPemberiNow =:= 0 ->
-        StatusPemberiNow = menang
-    ;
-        StatusPemberiNow = StatusPemberi
-    ),
-
-    PemberiNow = player(NamaPemberi, StatusPemberiNow, DeckPemberiNow),
-    PenerimaNow = player(NamaPenerima, StatusPeneri, DeckPenerimaNow),
-
-    updatePemainList(NamaPemberi, ListPemain, DeckPemberiNow, ListPemainSementara1),
-    updatePemainList(NamaPenerima, ListPemain, DeckPenerimaNow, ListFinal),
-
-    pindahGiliran(ListFinal, ListPemainNow),
-
-    retractall(gamestatus(_, _, _)),
-    asserta(gameStatus(ListPemainNow, Discard, DrawPile)),
-
-    write('Tuhan telah berkehendak.'), nl,
-    format('Kartu ~w milik ~w berpindah tangan ke ~w', [KartuTerpilih, NamaPemberi, NamaPenerima]),
-
-    (StatusPemberiNow == menang -> 
-        format('~w Menang!~n', [NamaPemberi]) 
-    ; 
-        true
-    ),
-
-    cekInfo.
+        format("Pemanggilan God's Hand gagal dilakukan oleh ~w~n", [NamaPemanggil]),
+        akhiriGiliran(NamaPemanggil, Status, Deck, SisaPemain, Discard, DrawPile), !
+    ).
