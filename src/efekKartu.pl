@@ -1,4 +1,4 @@
-applyEffect(drawtwo, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
+efekKartu(drawtwo, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, drawtwo)),
     SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
     drawKartu(2, DrawPile, DeckNext, DrawPileNow, DeckNextNow),
@@ -18,7 +18,7 @@ applyEffect(drawtwo, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardN
     asserta(gameStatus(ListFinal, DiscardNow, DrawPileNow)),
     cekInfo, !.
 
-applyEffect(rev, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
+efekKartu(rev, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, rev)),
     write('Urutan giliran dibalik!'), nl,   
     (
@@ -37,24 +37,27 @@ applyEffect(rev, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) 
         cekInfo, !
     ).
 
-applyEffect(skip, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
+efekKartu(skip, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, skip)),
     SisaPemain = [PemainKorban | SisaSetelahSkip],
     write('Pemain berikutnya dilewati!'), nl,
+    
+    PemainNow = player(Nama, StatusNow, DeckNow),
+    
     (
         SisaSetelahSkip == []
     ->
-        akhiriGiliran(Nama, StatusNow, DeckNow, [PemainKorban], DiscardNow, DrawPile)
+        ListFinal = [PemainNow, PemainKorban]
     ;
-        PemainNow = player(Nama, StatusNow, DeckNow),
         appendElem(SisaSetelahSkip, PemainNow, ListTemp),
-        appendElem(ListTemp, PemainKorban, ListFinal),
-        retractall(gameStatus(_, _, _)),
-        asserta(gameStatus(ListFinal, DiscardNow, DrawPile)),
-        cekInfo, !
-    ).
+        appendElem(ListTemp, PemainKorban, ListFinal)
+    ),
+    
+    retractall(gameStatus(_, _, _)),
+    asserta(gameStatus(ListFinal, DiscardNow, DrawPile)),
+    cekInfo, !.
 
-applyEffect(wild, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
+efekKartu(wild, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, wild)),
     gantiWarna(WarnaBaru),
     format('Warna yang dipilih : ~w~n', [WarnaBaru]), nl,
@@ -70,7 +73,7 @@ applyEffect(wild, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow)
     akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, DiscardBaru, DrawPile).
 
 
-applyEffect(wilddrawfour, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, [_KartuTerakhir | SisaDiscard]) :-
+efekKartu(wilddrawfour, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, [_KartuTerakhir | SisaDiscard]) :-
     asserta(riwayatAksi(Nama, wilddrawfour)),
     SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
     drawKartu(4, DrawPile, DeckNext, DrawPileNow, DeckNextNow),
@@ -94,7 +97,7 @@ applyEffect(wilddrawfour, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, [_K
     asserta(gameStatus(ListFinal, DiscardBaru, DrawPileNow)),
     cekInfo, !.
 
-applyEffect(mimic, kartu(WarnaTerakhir, mimic), Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
+efekKartu(mimic, kartu(WarnaTerakhir, mimic), Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     DiscardNow = [_KartuTerakhirMimic|SisaDiscard],
     (   
         findAction(SisaDiscard, 0, kartu(WarnaAksi, JenisTerakhir), Turn)
@@ -104,18 +107,14 @@ applyEffect(mimic, kartu(WarnaTerakhir, mimic), Nama, StatusNow, DeckNow, SisaPe
         format('Kartu aksi terakhir yang dimainkan: ~w-~w oleh ~w ~w giliran lalu.~n ', [WarnaAksi, JenisTerakhir, NamaPemainLama, Turn]),
         format('Kartu mimic menyalin efek ~w~n', [JenisTerakhir]),
         DiscardGanti = [kartu(WarnaAksi, JenisTerakhir) | SisaDiscard],
-        applyEffect(JenisTerakhir, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardGanti)
+        efekKartu(JenisTerakhir, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardGanti)
     ;   
         write('Tidak ada kartu aksi di tumpukan! Mimic bertingkah seperti kartu wild.'), nl,
-        applyEffect(wild, kartu(WarnaTerakhir, wild), Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow)
+        efekKartu(wild, kartu(WarnaTerakhir, wild), Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow)
     ).
 
-applyEffect(_, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
+efekKartu(_, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, DiscardNow, DrawPile).
-
-isMem(X, [X|_]).
-isMem(X, [_|T]) :-
-    isMem(X, T).
 
 findAction([Kartu|_], I, Kartu, I) :-
     Kartu = kartu(_, Jenis), 

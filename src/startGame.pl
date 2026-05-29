@@ -1,7 +1,10 @@
 :- dynamic(gameStatus/3).   
 :- dynamic(isStart/1).  
 :- dynamic(statusUNI/1).
-:- dynamic(riwayatAksi/2).
+:- dynamic(logAksi/2).
+:- dynamic(gameMode/1).
+:- dynamic(timPemain/2).
+:- dynamic(sudahSwap/1).
 
 adaDiDeck(H, [H|_]).
 adaDiDeck(H, [_|T]) :- adaDiDeck(H, T).
@@ -107,19 +110,93 @@ tangkap(NamaPemain) :-
         )
     ).
 
+modeValid(1, klasik) :- !.
+modeValid(2, turnamen) :- !.
+modeValid(_, x).
+
+pilihMode(ModePilihan) :-
+    nl, write('Tersedia 2 mode permainan.'), nl,
+    write('1. Mode klasik'), nl,
+    write('2. Mode turnamen'), nl,
+    write('Pilih mode permainan: '),
+    read(Pilihan),
+    modeValid(Pilihan, Mode),
+    ( 
+        Mode \== x 
+    ->
+        ModePilihan = Mode
+    ;
+        write('Pilihan tidak valid! Silakan input ulang.'), nl,
+        pilihMode(ModePilihan)
+    ).
+
+timB([], _, _, []).
+timB([H|T], A1, A2, [H|Sisa]) :-
+    H \== A1, H \== A2, !,
+    timB(T, A1, A2, Sisa).
+timB([_|T], A1, A2, Sisa) :-
+    timB(T, A1, A2, Sisa).
+
+shuffleTim(ListPlayer, ListPlayerNow) :-
+    nl, write('Membentuk tim secara acak...'), nl,
+    ListPlayer = [player(P1,_,_), player(P2,_,_), player(P3,_,_), player(P4,_,_)],
+    NamaPlayer = [P1,P2,P3,P4],
+
+    pick2Random(NamaPlayer, A1, A2),
+    timB(NamaPlayer, A1, A2, [B1, B2]),
+
+    asserta(timPemain(A1, timA)),
+    asserta(timPemain(A2, timA)),
+    asserta(timPemain(B1, timB)),
+    asserta(timPemain(B2, timB)),
+
+    isMem(player(A1, SA1, DA1), ListPlayer),
+    isMem(player(B1, SB1, DB1), ListPlayer),
+    isMem(player(A2, SA2, DA2), ListPlayer),
+    isMem(player(B2, SB2, DB2), ListPlayer),
+
+    ListPlayerNow = [player(A1, SA1, DA1), player(B1, SB1, DB1), player(A2, SA2, DA2), player(B2, SB2, DB2)],
+    
+    nl, write('--- Pembagian Tim Turnamen (2vs2) ---'), nl,
+    format('Tim A: ~w dan ~w~n', [A1, A2]),
+    format('Tim B: ~w dan ~w~n', [B1, B2]), nl.
+
 inisialisasiGame :-
     retractall(isStart(_)),
     retractall(gameStatus(_, _, _)),
     retractall(statusUNI(_)),
-    jumlahPemain(N),
+    retractall(gameMode(_)),
+
+    pilihMode(Mode),
+    asserta(gameMode(Mode)),
+    format('Permainan dimulai dalam mode ~w.~n', [Mode]),
+    ( 
+        Mode == turnamen 
+    ->
+        N = 4,
+        write('Mode Turnamen: Jumlah pemain otomatis diset 4 orang (2vs2)!'), nl
+    ;   
+        jumlahPemain(N)
+    ),
+    
     loopInputNama(N, [], ListPlayer, 1),
-    nl, write('Urutan pemain : '), printInputNama(ListPlayer), nl,
+
+    ( 
+        Mode == turnamen 
+    ->
+        shuffleTim(ListPlayer, ListPlayerNow)
+    ; 
+        ListPlayerNow = ListPlayer
+    ),
+    
+    nl, write('Urutan pemain : '), printInputNama(ListPlayerNow), nl,
     deckLengkap(DeckAwal),
     shuffleKartu(DeckAwal, DrawPileAwal),
-    bagikanKartu(ListPlayer, DrawPileAwal, ListTerisi, DrawPileSisa),
+    bagikanKartu(ListPlayerNow, DrawPileAwal, ListTerisi, DrawPileSisa),
     ambilKartuAwalValid(DrawPileSisa, KartuPertama, DrawPileFinal),
     DiscardPile = [KartuPertama],
     KartuPertama = kartu(W,J),
+
     nl, write('Setiap pemain mendapat 7 kartu acak'),nl,
     nl, write('Kartu Discard Top : '),write(W) ,write('-'), write(J), nl,
     retractall(gameStatus(_, _, _)),

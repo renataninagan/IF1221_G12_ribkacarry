@@ -19,6 +19,7 @@ akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, Discard, DrawPileNow) :-
     PemainNow = player(Nama, StatusNow, DeckNow),
     appendElem(SisaPemain, PemainNow, ListPemainNow),
     retractall(gameStatus(_, _, _)),
+    retractall(sudahSwap(_)),
     asserta(gameStatus(ListPemainNow, Discard, DrawPileNow)),
     (
         StatusNow == menang ->
@@ -27,7 +28,6 @@ akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, Discard, DrawPileNow) :-
     ;
         cekInfo
     ),
-
     !.
 
 ambilKartu :-
@@ -173,7 +173,7 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
 
     format('~w mengeluarkan kartu : ~w ~w~n', [Nama, WarnaPilih, JenisPilih]),
     DiscardNow = [Played, KartuTerakhir | SisaDiscard],
-    applyEffect(JenisPilih, Played, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow).
+    efekKartu(JenisPilih, Played, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow).
 
 kartuTidakCocok(Nama, Deck, KartuTerakhir) :-
     write('Kartu tidak cocok! Pilih kartu lain.'), nl,
@@ -235,4 +235,57 @@ tantang :-
         retractall(gameStatus(_, _, _)),
         asserta(gameStatus(ListFinal, [KartuTerakhir|SisaDiscard], DrawPileNow)),
         cekInfo
+    ).
+
+swapKartu(NoKartuP1, NoKartuP2) :-
+    isStart(true),
+    gameMode(turnamen),
+
+    gameStatus([player(P1, StatusNow, DeckP1) | SisaPemain], Discard, DrawPile),
+    ListSemua = [player(P1, StatusNow, DeckP1) | SisaPemain],
+    (
+        sudahSwap(P1)
+    ->
+        write('Swap hanya bisa dilakukan sekali dalam 1 giliran!'), nl, !
+    ;
+        timPemain(P1, TimP),
+        timPemain(P2, TimP),
+        P1 \== P2, 
+        isMem(player(P2, StatusP2, DeckP2), ListSemua),
+        !,
+
+        getLen(DeckP1, JmlKartuP1),
+        getLen(DeckP2, JmlKartuP2),
+        (
+            (JmlKartuP1 =:= 1; JmlKartuP2 =:= 1)
+        ->
+            write('Swap tidak bisa dilakukan karena Anda/P2 Anda hanya memiliki 1 kartu!'), nl, !
+        ;
+            (
+                (NoKartuP1 < 1; NoKartuP1 > JmlKartuP1;
+                NoKartuP2 < 1; NoKartuP2 > JmlKartuP2)
+            ->
+                write('Index diluar jumlah kartu! Tolong input kembali.'), nl, !
+            ;
+                getCard(DeckP1, NoKartuP1, KartuP1),
+                removeCard(DeckP1, NoKartuP1, DeckP1Removed),
+
+                getCard(DeckP2, NoKartuP2, KartuP2),
+                removeCard(DeckP2, NoKartuP2, DeckP2Removed),
+
+                appendElem(DeckP1Removed, KartuP2, DeckP1Now),
+                appendElem(DeckP2Removed, KartuP1, DeckP2Now),
+
+                updatePemainList(P1, ListSemua, DeckP1Now, ListTemp),
+                updatePemainList(P2, ListTemp, DeckP2Now, ListPemainBaru),
+
+                asserta(sudahSwap(P1)),
+
+                retractall(gameStatus(_, _, _)),
+                asserta(gameStatus(ListPemainBaru, Discard, DrawPile)),
+
+                format('Berhasil menukar kartu ke-~w Anda dengan kartu ke-~w milik ~w.~n', [NoKartuP1, NoKartuP2, P2]),
+                format('Kartu baru Anda: ~w~n', [KartuP2]), !
+            )
+        )
     ).
