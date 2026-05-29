@@ -1,6 +1,7 @@
 :- dynamic(gameStatus/3).   
 :- dynamic(isStart/1).  
 :- dynamic(statusUNI/1).
+:- dynamic(riwayatAksi/2).
 
 adaDiDeck(H, [H|_]).
 adaDiDeck(H, [_|T]) :- adaDiDeck(H, T).
