@@ -1,9 +1,7 @@
-:- include('mekanismeDasar.pl').
-
 lihatCommand :-
     gameStatus(ListPlayer, DiscardPile, DrawPile),
     ListPlayer = [player(_,Status,Deck)|_],
-    DiscardPil = [KartuTerakhir|_],
+    DiscardPile = [KartuTerakhir|_],
     write('Aksi utama yang tersedia :'), nl,
     (Status == 'main' -> write('1. mainKartu'), nl; true),
     ((\+ adaKartu(Deck, KartuTerakhir)) -> write('2. ambilKartu'), nl; true),

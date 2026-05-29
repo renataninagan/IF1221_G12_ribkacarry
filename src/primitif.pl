@@ -54,3 +54,6 @@ cekSisaKartuPemain([player(_Nama, _Status, Deck) | SisaPemain], Jumlah) :-
     ;
         Jumlah is SisaKartu
     ).
+lastElem([X], X).
+lastElem([_|T], X) :-
+    lastElem(T, X).

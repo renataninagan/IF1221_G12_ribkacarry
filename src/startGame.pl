@@ -1,9 +1,3 @@
-:- include('factsRules.pl').
-:- include('cekInfo.pl').
-:- include('mekanismeDasar.pl').
-:- include('lihatKartu.pl').
-:- include('lihatCommand.pl').
-:- include('primitif.pl').
 :- dynamic(gameStatus/3).   
 :- dynamic(isStart/1).  
 :- dynamic(statusUNI/1).
@@ -24,8 +18,21 @@ shuffleKartu(Deck, [H|T]) :-
     select(H, Deck, Sisa),
     shuffleKartu(Sisa, T).
 
+kartuAwalValid(kartu(Warna, Angka)) :-
+    Warna \== hitam,
+    integer(Angka).
+
+ambilKartuAwalValid([H|T], H, T) :-
+    kartuAwalValid(H),
+    !.
+
+ambilKartuAwalValid([H|T], KartuValid, DrawPileFinal) :-
+    \+ kartuAwalValid(H),
+    ambilKartuAwalValid(T, KartuValid, Sisa),
+    appendElem(Sisa, H, DrawPileFinal).
+
 awalBagiKartu(0, Pile, [], Pile) :- !.
-awalBagiKartu(N, [H|T], [H|Kartu], Sisa) :-
+awalBagiKartu(N, [H|T], [H| Kartu], Sisa) :-
     N > 0,
     N1 is N - 1,
     awalBagiKartu(N1, T, Kartu, Sisa).
@@ -70,15 +77,46 @@ loopInputNama(N, L, PlayerFinal, K) :-
 printInputNama([player(T,_,_)]) :- write(T), !. 
 printInputNama([player(H,_,_)|T]) :- write(H), write('-'), printInputNama(T).
 
+tangkap(NamaPemain) :-
+
+    gameStatus([player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain], Discard, DrawPile),
+
+    ListSemua = [player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain],
+    
+    ( member(player(NamaPemain, _, DeckTarget), ListSemua)->
+        length(DeckTarget, SisaKartu),
+        ( (SisaKartu =:= 1, \+ statusUNI(NamaPemain)) ->
+            format('~w tertangkap tidak menyerukan UNI.~n', [NamaPemain]),
+            format('~w mendapatkan 2 kartu penalti.~n', [NamaPemain]),
+            drawKartu(2, DrawPile, DeckTarget, DrawPileNow, DeckTargetNow),
+            updatePemainList(NamaPemain, ListSemua, DeckTargetNow, ListBaru),
+            retractall(gameStatus(_, _, _)),
+            asserta(gameStatus(ListBaru, Discard, DrawPileNow)),
+            cekInfo
+            
+        ;
+            format('Tuduhan salah! ~w tidak melanggar aturan.~n', [NamaPemain]),
+            format('~w mendapatkan 1 kartu penalti.~n', [Pemanggil]),
+            
+            drawKartu(1, DrawPile, DeckPemanggil, DrawPileNow, DeckPemanggilNow),
+            
+            retractall(gameStatus(_, _, _)),
+            asserta(gameStatus([player(Pemanggil, StatusPemanggil, DeckPemanggilNow)|SisaPemain], Discard, DrawPileNow)),
+            akhiriGiliran(Pemanggil, StatusPemanggil, DeckPemanggilNow, SisaPemain, Discard, DrawPileNow)
+        )
+    ).
+
 inisialisasiGame :-
-    \+ (isStart(true)),!,
+    retractall(isStart(_)),
+    retractall(gameStatus(_, _, _)),
+    retractall(statusUNI(_)),
     jumlahPemain(N),
     loopInputNama(N, [], ListPlayer, 1),
     nl, write('Urutan pemain : '), printInputNama(ListPlayer), nl,
     deckLengkap(DeckAwal),
     shuffleKartu(DeckAwal, DrawPileAwal),
     bagikanKartu(ListPlayer, DrawPileAwal, ListTerisi, DrawPileSisa),
-    DrawPileSisa = [KartuPertama|DrawPileFinal],
+    ambilKartuAwalValid(DrawPileSisa, KartuPertama, DrawPileFinal),
     DiscardPile = [KartuPertama],
     KartuPertama = kartu(W,J),
     nl, write('Setiap pemain mendapat 7 kartu acak'),nl,
@@ -125,8 +163,8 @@ uni(IndeksKartu) :-
         format('~w menyerukan UNI!~n', [Nama]),
         mainkanKartu(IndeksKartu)
     ;   
-        format('~w gagal menyerukan UNI!~n', [NamaPemain]),
-        format('~w mendapatkan 1 kartu penalti.~n', [NamaPemain]),
+        format('~w gagal menyerukan UNI!~n', [Nama]),
+        format('~w mendapatkan 1 kartu penalti.~n', [Nama]),
 
         drawKartu(1, DrawPile, Deck, DrawPileNow, DeckNow),
 

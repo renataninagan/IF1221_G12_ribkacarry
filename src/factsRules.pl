@@ -66,7 +66,7 @@ kartu(hijau, drawtwo).
 kartu(biru, drawtwo).
 
 kartu(hitam, wild).
-kartu(hitam, drawfour).
+kartu(hitam, wilddrawfour).
 kartu(hitam, mimic).
 
 
