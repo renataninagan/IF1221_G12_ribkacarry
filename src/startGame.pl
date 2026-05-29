@@ -138,7 +138,7 @@ tangkap(NamaPemain) :-
     gameStatus([player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain], Discard, DrawPile),
     
     ( member(player(NamaPemain, _, DeckTarget), [player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain]) ->
-        length(DeckTarget, SisaKartu),
+        getLen(DeckTarget, SisaKartu),
         ( (SisaKartu =:= 1, \+ statusUNI(NamaPemain)) ->
             format('~w tertangkap tidak menyerukan UNI.~n', [NamaPemain]),
             format('~w mendapatkan 2 kartu penalti.~n', [NamaPemain]),

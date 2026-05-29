@@ -38,3 +38,19 @@ pemainTerakhir([_|T], X) :- pemainTerakhir(T, X).
 
 cutLastElem([_], []).
 cutLastElem([H|T], [H|R]) :- cutLastElem(T, R).
+
+pickRandom(N, List, [H | T]) :-
+    N > 0,
+    random_select(H, List, Sisa)
+    N1 is N - 1,
+    pickRandom(N1, Sisa, T).
+
+cekSisaKartuPemain([], 0).
+cekSisaKartuPemain([player(_Nama, _Status, Deck) | SisaPemain], Jumlah) :-
+    getLen(Deck, Len),
+    cekSisaKartuPemain(SisaPemain, SisaKartu)
+    ( L =:= 1 ->
+        Jumlah is SisaKartu + 1
+    ;
+        Jumlah is SisaKartu
+    ).
