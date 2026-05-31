@@ -3,8 +3,22 @@
 :- include('primitif.pl').
 :- include('cekInfo.pl').
 
+cekBanyakKartu([Player | SisaPlayer]) :-
+    Player = player(Nama, Status, Deck),
+    getLen(Deck, X), 
+    X =\= 1, !, fail,
+    cekBanyakKartu(SisaPlayer).
+
 godsHand :-
     gameStatus([player(NamaPemanggil, Status, Deck) | SisaPemain], Discard, DrawPile),
+
+    Player = player(NamaPemanggil, Status, Deck),
+
+    (cekBanyakKartu([Player | SisaPemain]) ->
+        format('Gods Hand gagal dijalankan karena setiap pemain memiliki tepat 1 kartu~n')
+    ;
+        true
+    ),
 
     randomizeIdx(0, 100, Probability),
     (Probability < 20 ->
