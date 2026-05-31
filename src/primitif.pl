@@ -57,12 +57,29 @@ cekSisaKartuPemain([], 0).
 cekSisaKartuPemain([player(_Nama, _Status, Deck) | SisaPemain], Jumlah) :-
     getLen(Deck, Len),
     cekSisaKartuPemain(SisaPemain, SisaKartu),
-    ( L =:= 1 ->
+    ( Len =:= 1 ->
         Jumlah is SisaKartu + 1
     ;
         Jumlah is SisaKartu
     ).
 
+
+hapusPemain(_, [], []).
+hapusPemain(Nama,
+    [player(Nama,_,_)|T],
+    T) :- !.
+
+hapusPemain(Nama,
+    [H|T],
+    [H|T2]) :-
+    hapusPemain(Nama, T, T2).
+
+pemainSebelumnya([_|Sisa], Pemain) :-
+    arahPermainan(kanan),
+    lastElem(Sisa, Pemain).
+pemainSebelumnya([_|Sisa], Pemain) :-
+    arahPermainan(kiri),
+    Sisa = [Pemain|_].
 lastElem([X], X).
 lastElem([_|T], X) :-
     lastElem(T, X).

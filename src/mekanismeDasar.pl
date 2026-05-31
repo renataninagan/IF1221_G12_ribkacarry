@@ -1,5 +1,15 @@
-pindahGiliran([Pemain|SisaPemain], ListPemainNow) :-
-    appendElem(SisaPemain, Pemain, ListPemainNow).
+pindahGiliran(List, ListBaru) :-
+    arahPermainan(kanan),
+    List = [Pemain|Sisa],
+    appendElem(Sisa, Pemain, ListBaru),
+    !.
+
+pindahGiliran(List, ListBaru) :-
+    arahPermainan(kiri),
+    reverseL(List, Rev),
+    Rev = [Pemain|Sisa],
+    appendElem(Sisa, Pemain, RevBaru),
+    reverseL(RevBaru, ListBaru).
 
 adaKartu(Deck, kartu(Warna, Jenis)) :-
     member(kartu(W, J), Deck),
@@ -17,7 +27,8 @@ drawKartu(N, [KartuAtas|SisaDraw], Deck, DrawPileSisa, DeckSisa) :-
 
 akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, Discard, DrawPileNow) :-
     PemainNow = player(Nama, StatusNow, DeckNow),
-    appendElem(SisaPemain, PemainNow, ListPemainNow),
+    
+    pindahGiliran([PemainNow|SisaPemain], ListPemainNow),
     retractall(gameStatus(_, _, _)),
     retractall(sudahSwap(_)),
     asserta(gameStatus(ListPemainNow, Discard, DrawPileNow)),
@@ -29,6 +40,16 @@ akhiriGiliran(Nama, StatusNow, DeckNow, SisaPemain, Discard, DrawPileNow) :-
         cekInfo
     ),
     !.
+
+reverseArah :-
+    arahPermainan(kanan),
+    retractall(arahPermainan(_)),
+    assertz(arahPermainan(kiri)), !.
+
+reverseArah :-
+    arahPermainan(kiri),
+    retractall(arahPermainan(_)),
+    assertz(arahPermainan(kanan)).
 
 ambilKartu :-
     gameStatus([player(Nama, Status, Deck)|SisaPemain], [KartuTerakhir|SisaDiscard], DrawPile),!,
@@ -191,7 +212,9 @@ tantang :-
 
     write(' • Tantangan dilakukan!'), nl,
 
-    lastElem(SisaPemain, player(NamaPelaku, StatusPelaku, DeckPelaku)),
+    pemainSebelumnya([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
+    player(NamaPelaku, StatusPelaku, DeckPelaku)
+    ),
 
     format('Memeriksa kartu ~w...~n', [NamaPelaku]),
 
@@ -205,8 +228,11 @@ tantang :-
         write('Tantangan berhasil!'), nl,
         format('~w mendapatkan 4 kartu akibat ketahuan curang.~n', [NamaPelaku]),
 
-        cutLastElem([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
-                   SisaTanpaPelaku),
+        hapusPemain(
+            NamaPelaku,
+            [player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
+            SisaTanpaPelaku
+        ),
         drawKartu(4, DrawPile, DeckPelaku, DrawPileNow, DeckPelakuNow),
         PelakuNow = player(NamaPelaku, StatusPelaku, DeckPelakuNow),
         appendElem(SisaTanpaPelaku, PelakuNow, ListSementara),
@@ -220,7 +246,11 @@ tantang :-
         drawKartu(6, DrawPile, DeckTantang, DrawPileNow, DeckTantangNow),
         PemainTantangNow = player(NamaTantang, StatusTantang, DeckTantangNow),
         
-        cutLastElem([PemainTantangNow|SisaPemain], SisaTanpaPelaku2),
+        hapusPemain(
+            NamaPelaku,
+            [PemainTantangNow|SisaPemain],
+            SisaTanpaPelaku2
+        ),
         PelakuNow = player(NamaPelaku, StatusPelaku, DeckPelaku),
         appendElem(SisaTanpaPelaku2, PelakuNow, ListSementara),
 

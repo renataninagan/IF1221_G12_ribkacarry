@@ -171,6 +171,8 @@ inisialisasiGame :-
     retractall(gameStatus(_, _, _)),
     retractall(statusUNI(_)),
     retractall(gameMode(_)),
+    retractall(arahPermainan(_)),
+    assertz(arahPermainan(kanan)).
 
     pilihMode(Mode),
     asserta(gameMode(Mode)),
