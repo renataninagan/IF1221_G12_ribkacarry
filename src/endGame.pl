@@ -1,9 +1,9 @@
 :- include('primitif.pl').
 
 /*hitung nilai*/
+nilaiKartu(kartu(_,0), 1) :- !.
 nilaiKartu(kartu(_, Angka), Angka) :-
     integer(Angka), !.
-
 nilaiKartu(kartu(_,skip), 10).
 nilaiKartu(kartu(_,rev), 10).
 nilaiKartu(kartu(_,drawtwo), 10).
@@ -12,14 +12,14 @@ nilaiKartu(kartu(_,wild), 20).
 nilaiKartu(kartu(_,wilddrawfour), 20).
 nilaiKartu(kartu(_,mimic), 20).
 
-
 /*Total Poin*/
 hitungPoin([],0).
 hitungPoin([Kartu|T],Sum) :-
     nilaiKartu(Kartu,Nilai),
     hitungPoin(T,Sisa),
     Sum is Nilai + Sisa.
-
+    
+/*poin untuk tim*/
 hitungPoinTim([], _, 0).
 hitungPoinTim([player(Nama, _, Deck) | T], Tim, Total) :-
     timPemain(Nama, Tim), !,
@@ -43,6 +43,68 @@ ambilNamaAnggota([player(Nama, _, _) | T], Tim, [Nama | Sisa]) :-
     ambilNamaAnggota(T, Tim, Sisa).
 ambilNamaAnggota([_ | T], Tim, Sisa) :-
     ambilNamaAnggota(T, Tim, Sisa).
+
+/*nama kartu*/
+namaKartu(kartu(Warna, Angka), Teks) :-
+    integer(Angka),
+    atomic_list_concat([Warna,'-',Angka], Teks).
+namaKartu(kartu(Warna, skip), Teks) :-
+    atomic_list_concat([Warna,'-skip'], Teks).
+namaKartu(kartu(Warna, rev), Teks) :-
+    atomic_list_concat([Warna,'-reverse'], Teks).
+namaKartu(kartu(Warna, drawtwo), Teks) :-
+    atomic_list_concat([Warna,'-drawtwo'], Teks).
+namaKartu(kartu(Warna, wild), Teks) :-
+    atomic_list_concat([Warna,'-wild'], Teks).
+namaKartu(kartu(Warna, wilddrawfour), Teks) :-
+    atomic_list_concat([Warna,'-wilddrawfour'], Teks).
+namaKartu(kartu(Warna, mimic), Teks) :-
+    atomic_list_concat([Warna,'-mimic'], Teks).
+
+/*detail deck*/
+detailDeck([], [], []).
+detailDeck([K|T], [Nama|TNama], [Nilai|TNilai]) :-
+    namaKartu(K, Nama),
+    nilaiKartu(K, Nilai),
+    detailDeck(T, TNama, TNilai).
+
+/*gabung*/
+gabungPlus([X], X).
+gabungPlus([H|T], Hasil) :-
+    gabungPlus(T, Sisa),
+    atomic_list_concat([H,' + ',Sisa], Hasil).
+
+/*ubah angka ke atom*/
+angkaKeAtom(Angka, Atom):-
+    number_chars(Angka, Chars),
+    atom_chars(Atom, Chars).
+
+/*tampilkan poin tiap pemain*/
+tampilPoinPemain([]).
+tampilPoinPemain([player(Nama,_,Deck)|T]) :-
+    (
+        Deck = []
+    ->
+        format('~w: kartu habis = 0 poin~n', [Nama])
+    ;
+        detailDeck(Deck, NamaKartuList, NilaiList),
+        gabungPlus(NamaKartuList, KartuStr),
+        maplist(angkaKeAtom, NilaiList, NilaiAtom),
+        gabungPlus(NilaiAtom, NilaiStr),
+        hitungPoin(Deck, Total),
+        format(
+            '~w: ~w = ~w = ~d poin~n',
+            [Nama, KartuStr, NilaiStr, Total]
+        )
+    ),
+    tampilPoinPemain(T).
+
+/*pemain kartu habis*/
+pemainHabis([player(Nama,_,Deck)|_], Nama):-
+    Deck = [], !.
+pemainHabis([_|T], Nama):-
+    pemainHabis(T, Nama).
+
 
 /*Rank Pemain (INSERT)*/
 /*prioritas:
@@ -76,18 +138,16 @@ tampilRank([hasil(Nama,Poin,JumlahKartu)|T], Rank):-
     NextRank is Rank + 1,
     tampilRank(T, NextRank).
     
-/*END GAME*/
 endGame :-
-    gameStatus(ListPlayer,_,_),nl,
-    write('==========================================='), nl,
-    write('=========== PERMAINAN SELESAI ============='), nl,
-    write('   Ada Pemain yang Menghabiskan Kartunya   '), nl,
-    write('==========================================='), nl, nl,,
+    gameStatus(ListPlayer,_,_),
+    nl,
 
-    ( 
-        gameMode(turnamen) 
+    (
+        gameMode(turnamen)
     ->
-        write('Berikut perhitungan poin sisa kartu:'), nl,
+        write('==========================================='), nl,
+        write('=========== PERMAINAN SELESAI ============='), nl,
+        write('==========================================='), nl, nl,
 
         hitungPoinTim(ListPlayer, timA, PoinTimA),
         hitungPoinTim(ListPlayer, timB, PoinTimB),
@@ -96,30 +156,60 @@ endGame :-
         ambilNamaAnggota(ListPlayer, timB, [B1, B2]),
 
         write('Berikut perhitungan poin untuk masing-masing tim:'), nl,
-        format('Tim A (~w, ~w) : ~w poin~n', [A1, A2, PoinTimA]),
-        format('Tim B (~w, ~w) : ~w poin~n', [B1, B2, PoinTimB]), nl,
 
-        ( 
-            PoinTimA < PoinTimB 
+        format(
+            'Tim A (~w, ~w) : ~w poin~n',
+            [A1, A2, PoinTimA]
+        ),
+
+        format(
+            'Tim B (~w, ~w) : ~w poin~n',
+            [B1, B2, PoinTimB]
+        ),
+        nl,
+
+        (
+            PoinTimA < PoinTimB
         ->
             write('Selamat, Tim A menjadi pemenang turnamen!'), nl
-        ; 
-            PoinTimB < PoinTimA 
+
+        ;   PoinTimB < PoinTimA
         ->
             write('Selamat, Tim B menjadi pemenang turnamen!'), nl
+
         ;
             write('Game Berakhir Seri! Kedua tim memiliki total poin yang sama.'), nl
         )
+
     ;
+
+        pemainHabis(ListPlayer, NamaHabis),
+
+        format(
+            'Permainan selesai! ~w menghabiskan semua kartunya!~n~n',
+            [NamaHabis]
+        ),
+
+        write('Berikut perhitungan poin sisa kartu:'), nl,
+
+        tampilPoinPemain(ListPlayer),
+        nl,
+
         dataPemain(ListPlayer, Data),
         urutkan(Data, RankingFinal),
 
-        write('URUTAN PEMENANG:'), nl,
-        tampilRank(RankingFinal, 1), nl,
+        write('Urutan pemenang:'), nl,
+        tampilRank(RankingFinal, 1),
+        nl,
 
         RankingFinal = [hasil(Pemenang, _, _)|_],
-        format('Selamat, ~w menjadi pemenang!~n', [Pemenang])
+
+        format(
+            'Selamat, ~w menjadi pemenang!~n',
+            [Pemenang]
+        )
     ),
+
     nl,
 
     retractall(isStart(_)),
