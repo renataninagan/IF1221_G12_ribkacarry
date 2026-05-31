@@ -57,26 +57,34 @@ lihatCommand :-
     ListPlayer = [player(_,Status,Deck)|_],
     DiscardPile = [KartuTerakhir|_],
     
+    % Ekstrak warna dan jenis kartu terakhir untuk pengecekan adaKartu
+    KartuTerakhir = kartu(WarnaTerakhir, JenisTerakhir),
+    
     nl,
     write('────────────────────  COMMAND  ────────────────────'), nl,
     write(' • AKSI UTAMA'), nl,
+    
     (Status == 'main' -> write('   - mainkanKartu   (Mainkan kartu dari tangan)'), nl ; true),
+    
     (
         harusAmbil(N), N > 1 
     -> 
-        write('   - ambilKartu  (Ambil kartu dari draw pile)'), nl
+        write('   - ambilKartu     (Ambil kartu efek dari draw pile)'), nl
     ; 
-        write('   - ambilKartu  (Ambil kartu dari draw pile)'), nl,
-        write('   - tantang'), nl
+        ( \+ adaKartu(Deck, kartu(WarnaTerakhir, JenisTerakhir)) ->
+            write('   - ambilKartu     (Ambil kartu dari draw pile)'), nl
+        ;
+            write('   - [ambilKartu]   (Terkunci: Kamu punya kartu yang bisa dimainkan)'), nl
+        ),
+        write('   - tantang        (Tantang pemain sebelumnya)'), nl
     ),
 
     nl,
     write(' • AKSI PENDUKUNG'), nl,
-    write('   - lihatCommand (Membuka panduan perintah ini)'), nl,
-    write('   - lihatKartu   (Melihat kartu yang di tangan)'), nl,
-    write('   - cekInfo      (Melihat status permainan)'), nl,
+    write('   - lihatCommand   (Membuka panduan perintah ini)'), nl,
+    write('   - lihatKartu     (Melihat kartu yang di tangan)'), nl,
+    write('   - cekInfo        (Melihat status permainan)'), nl,
     write('────────────────────────────────────────────────────'), nl.
-    
 % LIHAT KARTU
 % menampilkan kartu pemain
 
