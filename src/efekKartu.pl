@@ -83,28 +83,18 @@ efekKartu(wild, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :
 
 efekKartu(wilddrawfour, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, [_KartuTerakhir | SisaDiscard]) :-
     asserta(riwayatAksi(Nama, wilddrawfour)),
-    SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
-    drawKartu(4, DrawPile, DeckNext, DrawPileNow, DeckNextNow),
     write('   [?!] EFEK WILD DRAW FOUR'), nl,
-    format('   ~w harus mengambil 4 kartu! (Gunakan ambilKartu pada giliran ~w)~n', [NamaNext, NamaNext]),
-
-    retractall(harusAmbil(_)),
-    asserta(harusAmbil(4)),
-
-    PemainNow = player(Nama, StatusNow, DeckNow),
-    PemainNext = player(NamaNext, StatusNext, DeckNextNow),
-
-    gantiWarna(WarnaBaru),
+    warnaAktf(WarnaBaru),
     format('   Warna kartu diubah menjadi : [~w]~n', [WarnaBaru]),
     DiscardBaru = [kartu(WarnaBaru, wilddrawfour) | SisaDiscard],
-    (
-        SisaLain == []
-    ->
-        ListFinal = [PemainNow, PemainNext]
-    ;
-        appendElem(SisaLain, PemainNow, ListTemp),
-        appendElem(ListTemp, PemainNext, ListFinal)
-    ),
+    
+    SisaPemain = [player(NamaNext, _, _) | _],
+    retractall(harusAmbil(_)),
+    assertz(harusAmbil(4)),
+    format('   ~w wajib mengambil 4 kartu. Gunakan ambilKartu atau tantang.~n', [NamaNext]),
+
+    PemainNow = player(Nama, StatusNow, DeckNow),
+    appendElem(SisaPemain, PemainNow, ListFinal),
     retractall(gameStatus(_, _, _)),
     asserta(gameStatus(ListFinal, DiscardBaru, DrawPileNow)),
     cekInfo, !.
