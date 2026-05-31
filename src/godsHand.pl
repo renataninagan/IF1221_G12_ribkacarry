@@ -14,7 +14,7 @@ godsHand :-
     ListPemain = [player(NamaPemanggil, Status, Deck) | SisaPemain],
 
     (cekBanyakKartu(ListPemain) ->
-        format('Gods Hand gagal dijalankan karena setiap pemain memiliki tepat 1 kartu~n'),
+        format('Gods Hand gagal dijalankan karena setiap pemain memiliki tepat 1 kartu.~n', []),
         akhiriGiliran(NamaPemanggil, Status, Deck, SisaPemain, Discard, DrawPile),
         !
     ;
