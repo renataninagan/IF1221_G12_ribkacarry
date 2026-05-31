@@ -26,6 +26,13 @@ godsHand :-
             Pemberi = player(NamaPemberi, StatusPemberi, DeckPemberi),
             Penerima = player(NamaPenerima, StatusPenerima, DeckPenerima),
 
+            (bisaUni(NamaPemberi) ->
+                retractall(statusUNI(NamaPemberi)),
+                asserta(statusUNI(NamaPemberi))
+            ;
+                true
+            ),
+
             getLen(DeckPemberi, LenPemberi),
             BatasKartu is LenPemberi + 1,
             randomizeIdx(1, BatasKartu, IdxKartu),
