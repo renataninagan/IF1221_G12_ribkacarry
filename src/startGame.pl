@@ -1,12 +1,14 @@
 :- dynamic(gameStatus/3).   
 :- dynamic(isStart/1).  
 :- dynamic(statusUNI/1).
-:- dynamic(logAksi/2).
+:- dynamic(riwayatAksi/2).
 :- dynamic(gameMode/1).
 :- dynamic(timPemain/2).
 :- dynamic(arahPermainan/1).
 :- dynamic(sudahSwap/1).
 :- dynamic(warnaAktf/1).
+:- dynamic(harusAmbil/1).
+:- dynamic(kartuTersembunyi/2).
 
 adaDiDeck(H, [H|_]).
 adaDiDeck(H, [_|T]) :- adaDiDeck(H, T).
@@ -174,8 +176,7 @@ inisialisasiGame :-
     retractall(statusUNI(_)),
     retractall(gameMode(_)),
     retractall(arahPermainan(_)),
-    retractall(warnaAktf(_)),
-    assertz(arahPermainan(kanan)).
+    assertz(arahPermainan(kanan)),
 
     pilihMode(Mode),
     asserta(gameMode(Mode)),
@@ -267,7 +268,7 @@ uni(IndeksKartu) :-
         retractall(gameStatus(_, _, _)),
         asserta(gameStatus([player(Nama, Status, DeckNow) | SisaPemain], Discard, DrawPileNow))
     ).
-
+/*
 tangkap(NamaPemain) :-
     gameStatus([player(Pemanggil, StatusPemanggil, DeckPemanggil)|SisaPemain], Discard, DrawPile),
     
@@ -293,7 +294,7 @@ tangkap(NamaPemain) :-
             akhiriGiliran(Pemanggil, StatusPemanggil, DeckPemanggil, SisaPemain, Discard, DrawPileNow)
         )
     ).
-
+*/
 listPemenang([], []).
 listPemenang([H|T], [H|L]) :-
     H = player(_, menang, _), !,

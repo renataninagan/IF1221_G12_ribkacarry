@@ -1,5 +1,3 @@
-:- dynamic(kartuTersembunyi/2).
-
 sembunyikanKartu(N) :-
     gameStatus([player(Nama, Status, Deck) | SisaPemain], Discard, DrawPile),
 

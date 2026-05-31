@@ -52,21 +52,18 @@ reverseArah :-
     assertz(arahPermainan(kanan)).
 
 ambilKartu :-
-    gameStatus([player(Nama, Status, Deck)|SisaPemain], [KartuTerakhir|SisaDiscard], DrawPile),!,
+    gameStatus([player(Nama, Status, Deck)|SisaPemain], [KartuTerakhir|SisaDiscard], DrawPile), !,
     (
-        KartuTerakhir = kartu(_, wilddrawfour)
+        harusAmbil(N), N > 0
     ->
-        drawKartu(4, DrawPile, Deck, DrawPileNow, DeckNow),
-        format('~w mengambil 4 kartu dari deck karena kartu Wild Draw Four dan mengakhiri giliran.~n', [Nama]), nl,
+        retractall(harusAmbil(_)),
+        drawKartu(N, DrawPile, Deck, DrawPileNow, DeckNow),
+        format(' • ~w mengambil ~w kartu akibat efek kartu aksi dan mengakhiri giliran.~n', [Nama, N]), nl,
         akhiriGiliran(Nama, Status, DeckNow, SisaPemain, [KartuTerakhir|SisaDiscard], DrawPileNow)
     ;
         drawKartu(1, DrawPile, Deck, DrawPileNow, DeckNow),
-        format('~w mengambil 1 kartu dari deck dan mengakhiri giliran.~n',
-        [Nama]), nl,
-        akhiriGiliran(Nama, Status, DeckNow,
-        SisaPemain,
-        [KartuTerakhir|SisaDiscard],
-        DrawPileNow)
+        format(' • ~w mengambil 1 kartu dari deck dan mengakhiri giliran.~n', [Nama]), nl,
+        akhiriGiliran(Nama, Status, DeckNow, SisaPemain, [KartuTerakhir|SisaDiscard], DrawPileNow)
     ).
 
 kartuCocokSelainHitam(Deck, WarnaTerakhir, JenisTerakhir) :-
@@ -99,11 +96,19 @@ pilihWarna(Warna) :-
         pilihWarna(Warna)
     ).
 
+mainkanKartu(_) :-
+    gameStatus([player(Nama, _, _)|_], _, _),
+    harusAmbil(N),
+    N > 0,
+    !,
+    format('   [!] ~w wajib mengambil ~w kartu terlebih dahulu. Gunakan ambilKartu.~n', [Nama, N]),
+    fail.
+
 mainkanKartu(N) :-
     gameStatus([player(Nama, Status, Deck)|SisaPemain], [KartuTerakhir|SisaDiscard], DrawPile),
     retractall(statusUNI(Nama)),
-    KartuTerakhir = kartu(_, JenisTerakhir),
-    warnaAktf(WarnaAktif),
+    KartuTerakhir = kartu(WarnaTerakhir, JenisTerakhir),
+    (warnaAktf(WarnaAktif) -> true ; WarnaAktif = WarnaTerakhir),
     length(Deck, L),
     (
         N >= 1,
@@ -169,30 +174,13 @@ mainkanKartu(N) :-
 /*CEK KECOCOKAN KARTU*/
 
     (
-        WarnaPilih == hitam
-        ;
-        WarnaPilih == WarnaAktif
-        ;
-        JenisPilih == JenisTerakhir
+        (WarnaPilih == hitam ; WarnaPilih == WarnaAktif ; JenisPilih == JenisTerakhir)
     ->
-        kartuCocok(
-            Nama,
-            Status,
-            Deck,
-            N,
-            Played,
-            SisaPemain,
-            KartuTerakhir,
-            SisaDiscard,
-            DrawPile
-        )
+        kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard, DrawPile)
     ;
-        kartuTidakCocok(
-            Nama,
-            Deck,
-            KartuTerakhir
-        )
-    ).
+        % Jangan di-fail di sini agar prompt `| ?- ` tidak langsung mati dengan status 'no'
+        kartuTidakCocok(Nama, Deck, KartuTerakhir)
+    ),!.
 kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard, DrawPile) :-
     Played = kartu(WarnaPilih, JenisPilih),
 
@@ -211,7 +199,6 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
             HiddenBaru is HiddenIdx - 1,
             retractall(kartuTersembunyi(Nama, _)),
             assertz(kartuTersembunyi(Nama, HiddenBaru))
-
         ;
             true
         )
@@ -252,34 +239,15 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
         DiscardNow
     ).
 
-kartuTidakCocok(Nama, Deck, KartuTerakhir) :-
+kartuTidakCocok(_, Deck, KartuTerakhir) :-
     warnaAktf(WarnaAktif),
-    gameStatus(
-        _,
-        [kartu(_, JenisTerakhir)|_],
-        _
-    ),
-
-    write('   [!] Kartu tidak cocok! Pilih kartu lain.'), nl,
-    (
-        \+ adaKartuValid(
-            Deck,
-            WarnaAktif,
-            JenisTerakhir
-        )
-    ->
-        format(
-            ' • ~w tidak punya kartu yang cocok, otomatis mengambil kartu.~n',
-            [Nama]
-        ),
-        ambilKartu
-    ;
-        true
+    KartuTerakhir = kartu(_, JenisTerakhir),
+    (   \+ adaKartu(Deck, kartu(WarnaAktif, JenisTerakhir)) ->
+        write('   [!] Tidak ada kartu yang cocok. Anda hanya bisa melakukan ambilKartu.'), nl
+    ;   write('   [!] Kartu tidak cocok! Pilih kartu lain.'), nl
     ),
     fail.
 
-
-    
 tantang :-
     gameStatus([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
     [KartuTerakhir|SisaDiscard], DrawPile),

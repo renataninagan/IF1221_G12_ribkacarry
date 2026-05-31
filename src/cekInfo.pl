@@ -61,15 +61,22 @@ lihatCommand :-
     write('────────────────────  COMMAND  ────────────────────'), nl,
     write(' • AKSI UTAMA'), nl,
     (Status == 'main' -> write('   - mainkanKartu   (Mainkan kartu dari tangan)'), nl ; true),
-    ((\+ adaKartu(Deck, KartuTerakhir)) -> write('   - ambilKartu  (Ambil kartu dari draw pile)'), nl ; true),
-    
+    (
+        harusAmbil(N), N > 1 
+    -> 
+        write('   - ambilKartu  (Ambil kartu dari draw pile)'), nl
+    ; 
+        write('   - ambilKartu  (Ambil kartu dari draw pile)'), nl,
+        write('   - tantang'), nl
+    ),
+
     nl,
     write(' • AKSI PENDUKUNG'), nl,
     write('   - lihatCommand (Membuka panduan perintah ini)'), nl,
     write('   - lihatKartu   (Melihat kartu yang di tangan)'), nl,
     write('   - cekInfo      (Melihat status permainan)'), nl,
     write('────────────────────────────────────────────────────'), nl.
-
+    
 % LIHAT KARTU
 % menampilkan kartu pemain
 

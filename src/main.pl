@@ -8,6 +8,7 @@
 :- include('efekKartu.pl').
 :- include('godsHand.pl').
 
+
  
 startGame :-
     nl,

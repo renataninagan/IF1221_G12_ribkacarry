@@ -69,7 +69,3 @@ kartu(hitam, wild).
 kartu(hitam, wilddrawfour).
 kartu(hitam, mimic).
 
-
-/*RULES*/
-:- dynamic arahPermainan/1.
-:- dynamic warnaAktf/1.

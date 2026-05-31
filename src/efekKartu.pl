@@ -2,8 +2,11 @@ efekKartu(drawtwo, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow
     asserta(riwayatAksi(Nama, drawtwo)),
     SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
     drawKartu(2, DrawPile, DeckNext, DrawPileNow, DeckNextNow),nl, 
-    write('   [?!] EFEK DRAW TWO~n'),
-    format('   ~w mengambil 2 kartu dari Draw Pile.~n', [NamaNext]),
+    write('   [?!] EFEK DRAW TWO'), nl,
+    format('   ~w harus mengambil 2 kartu! (Gunakan ambilKartu pada giliran ~w)~n', [NamaNext, NamaNext]),
+
+    retractall(harusAmbil(_)),
+    asserta(harusAmbil(2)),
     
     PemainNow = player(Nama, StatusNow, DeckNow),
     PemainNext = player(NamaNext, StatusNext, DeckNextNow),
@@ -23,6 +26,7 @@ efekKartu(rev, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow) :-
     asserta(riwayatAksi(Nama, rev)),nl,
     write('   [?!] EFEK REVERSE'), nl,
     write('   Urutan giliran bermain dibalik!'), nl,  
+    reverseArah,
     (
         SisaPemain = [PemainKorban | []]
     ->
@@ -82,7 +86,10 @@ efekKartu(wilddrawfour, _, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, [_Kar
     SisaPemain = [player(NamaNext, StatusNext, DeckNext)|SisaLain],
     drawKartu(4, DrawPile, DeckNext, DrawPileNow, DeckNextNow),
     write('   [?!] EFEK WILD DRAW FOUR'), nl,
-    format('   ~w wajib mengambil 4 kartu dari Draw Pile.~n', [NamaNext]),
+    format('   ~w harus mengambil 4 kartu! (Gunakan ambilKartu pada giliran ~w)~n', [NamaNext, NamaNext]),
+
+    retractall(harusAmbil(_)),
+    asserta(harusAmbil(4)),
 
     PemainNow = player(Nama, StatusNow, DeckNow),
     PemainNext = player(NamaNext, StatusNext, DeckNextNow),
