@@ -240,13 +240,20 @@ kartuTidakCocok(_, Deck, KartuTerakhir) :-
 tantang :-
     gameStatus([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
     [KartuTerakhir|SisaDiscard], DrawPile),
+        (
+        harusAmbil(4)
+    ->
+        true
+    ;
+        write('   [!] Kamu tidak sedang terdampak Wild Draw Four!'), nl, fail
+    ),
 
     (KartuTerakhir = kartu(_, wilddrawfour) ->
         true
     ;
         write('   [!] Tidak ada wild draw four yang bisa ditantang!'), nl, fail
     ),
-
+    retractall(harusAmbil(_)),
     write(' • Tantangan dilakukan!'), nl,
 
     pemainSebelumnya([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
