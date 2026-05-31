@@ -79,10 +79,31 @@ warnaValid(biru).
 warnaValid(hijau).
 warnaValid(kuning).
 
+pilihWarna(Warna) :-
+    nl,
+    write('Pilih warna baru:'), nl,
+    write('1. merah'), nl,
+    write('2. kuning'), nl,
+    write('3. hijau'), nl,
+    write('4. biru'), nl,
+    write('>> '),
+    read(Pilih),
+
+    (
+        Pilih =:= 1 -> Warna = merah
+    ;   Pilih =:= 2 -> Warna = kuning
+    ;   Pilih =:= 3 -> Warna = hijau
+    ;   Pilih =:= 4 -> Warna = biru
+    ;
+        write('Pilihan tidak valid!'), nl,
+        pilihWarna(Warna)
+    ).
+
 mainkanKartu(N) :-
     gameStatus([player(Nama, Status, Deck)|SisaPemain], [KartuTerakhir|SisaDiscard], DrawPile),
     retractall(statusUNI(Nama)),
-    KartuTerakhir = kartu(WarnaTerakhir, JenisTerakhir),
+    KartuTerakhir = kartu(_, JenisTerakhir),
+    warnaAktf(WarnaAktif),
     length(Deck, L),
     (
         N >= 1,
@@ -90,80 +111,88 @@ mainkanKartu(N) :-
     ->
         true
     ;
-        format('   [!] Tidak ada kartu ke ~w! Pilih kartu antara 1 - ~w.~n', [N, L]),
-        write('>> Pilih nomor kartu (angka saja, diakhiri titik): '),
-        read(NBaru),
-        mainkanKartu(NBaru),
-        !
+        format('   [!] Tidak ada kartu ke-~w!~n', [N]),
+        fail
     ),
 
     getCard(Deck, N, Played),
     Played = kartu(WarnaPilih, JenisPilih),
 
+    /*cek wild draw four*/
+
     (
         WarnaPilih == hitam,
         JenisPilih == wilddrawfour,
-        kartuCocokSelainHitam(Deck, WarnaTerakhir, JenisTerakhir)
-    ->
-        write('   [!] Wild Draw Four tidak boleh digunakan. Ada kartu lain yang dapat digunakan.'), nl,
-        write('>> Pilih nomor kartu lagi: '),
-        read(NBaru),
-        !,
-        mainkanKartu(NBaru),
-        !
-    ;
-        true
-    ),
-
-    (
-        (JenisPilih == drawtwo, JenisTerakhir == drawtwo)
-    ->
-        write('   [!] Draw Two tidak boleh ditumpuk!'), nl,
-        write('>> Pilih nomor kartu lagi: '),
-        read(NBaru), mainkanKartu(NBaru), !
-    ;
-        true
-    ),
-
-    (
-        (JenisPilih == wild, JenisTerakhir == wild)
-    ->
-        write('   [!] Wild tidak boleh ditumpuk!'), nl,
-        write('>> Pilih nomor kartu lagi: '),
-        read(NBaru), mainkanKartu(NBaru), !
-    ;
-        true
-    ),
-    (
-        (JenisPilih == wilddrawfour, JenisTerakhir == wilddrawfour)
-    ->
-        write('   [!] Wild Draw Four tidak boleh ditumpuk!'), nl,
-        write('>> Pilih nomor kartu lagi: '),
-        read(NBaru), mainkanKartu(NBaru), !
-    ;
-        true
-    ),
-
-    (
-        (
-            WarnaPilih == WarnaTerakhir
-        ;
-            JenisPilih == JenisTerakhir
-        ;
-            (
-                WarnaPilih == hitam,
-                JenisTerakhir \== wild,
-                JenisTerakhir \== wilddrawfour
-            )
+        kartuCocokSelainHitam(
+            Deck,
+            WarnaAktif,
+            JenisTerakhir
         )
     ->
-        kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard, DrawPile),
-        !
+        write('   [!] Wild Draw Four tidak boleh digunakan.'), nl,
+        fail
     ;
-        kartuTidakCocok(Nama, Deck, KartuTerakhir),
-        !
-    ).
+        true
+    ),
 
+   /*cek stacking terlaeanrg*/
+    (
+        JenisPilih == drawtwo,
+        JenisTerakhir == drawtwo
+    ->
+        write('   [!] Draw Two tidak boleh ditumpuk!'), nl,
+        fail
+    ;
+        true
+    ),
+
+    (
+        JenisPilih == wild,
+        JenisTerakhir == wild
+    ->
+        write('   [!] Wild tidak boleh ditumpuk!'), nl,
+        fail
+    ;
+        true
+    ),
+
+    (
+        JenisPilih == wilddrawfour,
+        JenisTerakhir == wilddrawfour
+    ->
+        write('   [!] Wild Draw Four tidak boleh ditumpuk!'), nl,
+        fail
+    ;
+        true
+    ),
+    
+/*CEK KECOCOKAN KARTU*/
+
+    (
+        WarnaPilih == hitam
+        ;
+        WarnaPilih == WarnaAktif
+        ;
+        JenisPilih == JenisTerakhir
+    ->
+        kartuCocok(
+            Nama,
+            Status,
+            Deck,
+            N,
+            Played,
+            SisaPemain,
+            KartuTerakhir,
+            SisaDiscard,
+            DrawPile
+        )
+    ;
+        kartuTidakCocok(
+            Nama,
+            Deck,
+            KartuTerakhir
+        )
+    ).
 kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard, DrawPile) :-
     Played = kartu(WarnaPilih, JenisPilih),
 
@@ -192,14 +221,65 @@ kartuCocok(Nama, Status, Deck, N, Played, SisaPemain, KartuTerakhir, SisaDiscard
 
     (DeckNow == [] -> StatusNow = menang ; StatusNow = Status),
 
-    format(' • ~w mengeluarkan kartu : [~w - ~w]~n', [Nama, WarnaPilih, JenisPilih]),
+    format(' • ~w mengeluarkan kartu : [~w - ~w]~n',
+    [Nama, WarnaPilih, JenisPilih]),
+
     DiscardNow = [Played, KartuTerakhir | SisaDiscard],
-    efekKartu(JenisPilih, Played, Nama, StatusNow, DeckNow, SisaPemain, DrawPile, DiscardNow).
+
+    (
+        WarnaPilih == hitam
+        ->
+            pilihWarna(WarnaBaru),
+
+            retractall(warnaAktf(_)),
+            assertz(warnaAktf(WarnaBaru)),
+
+            format('Warna aktif sekarang: ~w~n',
+            [WarnaBaru])
+        ;
+            retractall(warnaAktf(_)),
+            assertz(warnaAktf(WarnaPilih))
+    ),
+
+    efekKartu(
+        JenisPilih,
+        Played,
+        Nama,
+        StatusNow,
+        DeckNow,
+        SisaPemain,
+        DrawPile,
+        DiscardNow
+    ).
 
 kartuTidakCocok(Nama, Deck, KartuTerakhir) :-
-    write('   [!] Kartu tidak cocok! Pilih kartu lain.'), nl,
-    (\+ adaKartu(Deck, KartuTerakhir) -> format(' • ~w tidak punya kartu yang cocok, otomatis mengambil kartu.~n', [Nama]),ambilKartu; true),fail.
+    warnaAktf(WarnaAktif),
+    gameStatus(
+        _,
+        [kartu(_, JenisTerakhir)|_],
+        _
+    ),
 
+    write('   [!] Kartu tidak cocok! Pilih kartu lain.'), nl,
+    (
+        \+ adaKartuValid(
+            Deck,
+            WarnaAktif,
+            JenisTerakhir
+        )
+    ->
+        format(
+            ' • ~w tidak punya kartu yang cocok, otomatis mengambil kartu.~n',
+            [Nama]
+        ),
+        ambilKartu
+    ;
+        true
+    ),
+    fail.
+
+
+    
 tantang :-
     gameStatus([player(NamaTantang, StatusTantang, DeckTantang)|SisaPemain],
     [KartuTerakhir|SisaDiscard], DrawPile),

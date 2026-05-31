@@ -9,12 +9,17 @@ saveGame :-
     open(FilePath, write, Stream),
     gameStatus(ListPlayer, DiscardPile, DrawPile),
     gameMode(Mode),
-    arahpermainan(Arah),
+    arahPermainan(Arah),
+    warnaAktf(WarnaAktif),
 
-    wrteq(Stream, gameStatus(ListPlayer, DiscardPile, DrawPile)),
+    writeq(Stream, gameStatus(ListPlayer, DiscardPile, DrawPile)),
     write(Stream,'.'), nl(Stream),
 
     writeq(Stream, arahPermainan(Arah)),
+    write(Stream,'.'),
+    nl(Stream),
+
+    writeq(Stream, warnaAktf(WarnaAktif)),
     write(Stream,'.'),
     nl(Stream),
 
@@ -65,12 +70,15 @@ loadGame :-
         retractall(statusUNI(_)),
         retractall(timPemain(_,_)),
         retractall(arahPermainan(_)),
+        retractall(warnaAktf(_)),
         retractall(isStart(_)),
 
         load_files(FilePath, [if(change)]),
         
         arahPermainan(Arah),
+        warnaAktf(WarnaAktf),
         format('Arah permainan saat ini: ~w~n', [Arah]),
+        format('Warna aktif saat ini: ~w~n', [WarnaAktf]),
 
         asserta(isStart(true)),
 

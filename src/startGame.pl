@@ -4,7 +4,9 @@
 :- dynamic(logAksi/2).
 :- dynamic(gameMode/1).
 :- dynamic(timPemain/2).
+:- dynamic(arahPermainan/1).
 :- dynamic(sudahSwap/1).
+:- dynamic(warnaAktf/1).
 
 adaDiDeck(H, [H|_]).
 adaDiDeck(H, [_|T]) :- adaDiDeck(H, T).
@@ -172,6 +174,7 @@ inisialisasiGame :-
     retractall(statusUNI(_)),
     retractall(gameMode(_)),
     retractall(arahPermainan(_)),
+    retractall(warnaAktf(_)),
     assertz(arahPermainan(kanan)).
 
     pilihMode(Mode),
@@ -206,6 +209,9 @@ inisialisasiGame :-
     ambilKartuAwalValid(DrawPileSisa, KartuPertama, DrawPileFinal),
     DiscardPile = [KartuPertama],
     KartuPertama = kartu(W,J),
+
+    retractall(warnaAktf(_)),
+    assertz(warnaAktf(W)),
 
     write(' • PERSIAPAN DECK'), nl,
     write('   Setiap pemain mendapat 7 kartu acak.'), nl,

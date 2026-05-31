@@ -72,4 +72,4 @@ kartu(hitam, mimic).
 
 /*RULES*/
 :- dynamic arahPermainan/1.
-:- dynamic warnaAktif/1.
+:- dynamic warnaAktf/1.
